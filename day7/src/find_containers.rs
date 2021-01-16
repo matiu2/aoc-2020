@@ -1,10 +1,8 @@
-use std::collections::{HashMap, HashSet};
+use crate::{BagID, Containers};
+use std::collections::HashSet;
 
 /// Finds all the direct containers of a certain type of magic bag (`query`)
-fn direct_containers<'a>(
-    query: (&str, &str),
-    map: &HashMap<(&'a str, &'a str), HashMap<(&'a str, &'a str), usize>>,
-) -> Vec<(&'a str, &'a str)> {
+fn direct_containers<'a>(query: BagID, map: &Containers<'a>) -> Vec<BagID<'a>> {
     map.iter()
         .filter(|(_key, value)| value.contains_key(&query))
         .map(|(key, _value)| key)
@@ -13,13 +11,10 @@ fn direct_containers<'a>(
 }
 
 /// Recursively finds all magic bags that can eventually contain a certain magic bag (`query`)
-pub fn find_containers<'a>(
-    query: (&str, &str),
-    map: &HashMap<(&'a str, &'a str), HashMap<(&'a str, &'a str), usize>>,
-) -> HashSet<(&'a str, &'a str)> {
+pub fn find_containers<'a>(query: BagID, map: &Containers<'a>) -> HashSet<BagID<'a>> {
     // First find all the top level bags that contain our query (eg. shiny gold)
     // Because this is a recursive search, this acts as our stack
-    let mut containers_to_search: Vec<(&str, &str)> = direct_containers(query, map);
+    let mut containers_to_search: Vec<BagID> = direct_containers(query, map);
     // Now recurse through all the direct containers that contain our query
     let mut searched_queries = HashSet::new();
     // Get the next query from the stack

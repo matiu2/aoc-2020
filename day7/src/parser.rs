@@ -1,12 +1,9 @@
+use crate::{Containers, Contents};
 use std::collections::HashMap;
 
 /// Parse the contents part of the rule, a ',' delimited list in the format:
 /// eg. 2 shiny gold bags, 9 faded blue bags.
-pub fn parse_contents<'a>(
-    line_num: usize,
-    line: &'a str,
-    contents: &'a str,
-) -> HashMap<(&'a str, &'a str), usize> {
+pub fn parse_contents<'a>(line_num: usize, line: &'a str, contents: &'a str) -> Contents<'a> {
     let mut out = HashMap::new();
     let contents: Vec<&str> = contents.split(",").collect();
     contents.iter().for_each(|rule| {
@@ -31,15 +28,16 @@ pub fn parse_contents<'a>(
     out
 }
 
-/// Parses the rules into a nice HashMap
-pub fn rule_parser(input: &str) -> HashMap<(&str, &str), HashMap<(&str, &str), usize>> {
+/// Parses the rules into our internal representation
+pub fn rule_parser(input: &str) -> Containers {
     let mut out = HashMap::new();
     input
         .lines()
         .enumerate()
+        // Remove empty lines
         .filter(|(_number, line)| !line.is_empty())
         // Split the rule into container and contents
-        // eg. ["light red bags", "1 bright white bag, 2 muted yellow bags."]
+        // eg. ["light red bags", <CONTAIN>, "1 bright white bag, 2 muted yellow bags."]
         .map(|(line_num, line)| {
             let parts: Vec<&str> = line.split("contain").collect();
             if let &[container, contents] = parts.as_slice() {

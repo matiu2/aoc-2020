@@ -16,6 +16,7 @@ fn main() {
     );
 }
 
+/// Finds all the direct containers of a certain type of magic bag (`query`)
 pub fn direct_containers<'a>(
     query: (&str, &str),
     map: &HashMap<(&'a str, &'a str), HashMap<(&'a str, &'a str), usize>>,
@@ -27,6 +28,7 @@ pub fn direct_containers<'a>(
         .collect()
 }
 
+/// Recursively finds all magic bags that can eventually contain a certain magic bag (`query`)
 pub fn find_containers<'a>(
     query: (&str, &str),
     map: &HashMap<(&'a str, &'a str), HashMap<(&'a str, &'a str), usize>>,
@@ -83,6 +85,7 @@ fn parse_contents<'a>(
     out
 }
 
+/// Parses the rules into a nice HashMap
 fn rule_parser(input: &str) -> HashMap<(&str, &str), HashMap<(&str, &str), usize>> {
     let mut out = HashMap::new();
     input

@@ -1,3 +1,5 @@
+use std::collections::{hash_set, HashSet};
+
 use parse_display::{Display, FromStr};
 
 #[derive(Display, FromStr, PartialEq, Debug)]
@@ -5,8 +7,7 @@ use parse_display::{Display, FromStr};
 enum Instruction {
     #[display("acc {0}")]
     Acc(i64),
-    #[display("nop {0}")]
-    Nop(i64),
+    Nop,
     #[display("jmp {0}")]
     Jmp(i64),
 }
@@ -20,6 +21,27 @@ fn parse(input: &str) -> Vec<Instruction> {
                 .expect(&format!("Unable to parse instruction: {}", i))
         })
         .collect()
+}
+
+fn execute(instructions: &[Instruction]) -> i64 {
+    // Keep track of previous instructions
+    let previous_instructions = HashSet::new();
+    // Keep track of the accumulator
+    let mut acc = 0;
+    // Keep track of the instruction pointer
+    let mut ip = 0;
+    // loop until done
+    while Some(instruction) = instructions.get(ip) {
+        if previous_instructions.contains(ip) {
+            break;
+        }
+        match ip {
+            Instruction::Acc(num) => acc + num,
+            Instruction::Jmp(num) => ip + num,
+            Instruction::Nop(_) => ip + num,
+        }
+    }
+    acc
 }
 
 fn main() {

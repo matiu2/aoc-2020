@@ -36,22 +36,10 @@ pub fn find_containers<'a>(query: BagID, map: &Containers<'a>) -> HashSet<BagID<
 #[cfg(test)]
 mod tests {
 
-    fn input() -> &'static str {
-        r#"light red bags contain 1 bright white bag, 2 muted yellow bags.
-dark orange bags contain 3 bright white bags, 4 muted yellow bags.
-bright white bags contain 1 shiny gold bag.
-muted yellow bags contain 2 shiny gold bags, 9 faded blue bags.
-shiny gold bags contain 1 dark olive bag, 2 vibrant plum bags.
-dark olive bags contain 3 faded blue bags, 4 dotted black bags.
-vibrant plum bags contain 5 faded blue bags, 6 dotted black bags.
-faded blue bags contain no other bags.
-dotted black bags contain no other bags."#
-    }
-
     #[test]
     fn test_count() {
         // We need to count how many bags could eventually contain a shiny gold bag
-        let map = crate::rule_parser(input());
+        let map = crate::rule_parser(crate::test_input());
         let got = super::find_containers(("shiny", "gold"), &map).len();
         let expected = 4;
         assert_eq!(expected, got);

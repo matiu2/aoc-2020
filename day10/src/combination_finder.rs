@@ -20,6 +20,7 @@ fn step(adapters: &[usize], current_output: usize, target_output: usize) -> usiz
             .binary_search(&(current_output + 1))
             // If it can't find the exact place, it'll give us the place where it would be inserted
             .unwrap_or_else(|pos| pos);
+        dbg!(current_output, start);
         adapters[start..]
             .iter()
             .cloned()

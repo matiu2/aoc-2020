@@ -22,19 +22,13 @@ fn step(
         // We've recursed down to the bottom
         1
     } else {
-        let start = adapters
-            // Start search where the first adapter should be
-            // NOTE: If there are multiple adapters with the same joltage, it will
-            //       choose an random one, but we don't expect that in the adapters
-            .binary_search(&(current_output + 1))
-            // If it can't find the exact place, it'll give us the place where it would be inserted
-            .unwrap_or_else(|pos| pos);
-        dbg!(current_output, start);
-        let count = adapters[start..]
+        let count = adapters
             .iter()
             .cloned()
-            .take_while(|adapter_output| *adapter_output - current_output <= 3)
-            .map(|next_step| step(&adapters, next_step, target_output, &mut cache))
+            .enumerate()
+            .skip_while(|(_i, adapter_output)| *adapter_output == current_output)
+            .take_while(|(_i, adapter_output)| *adapter_output - current_output <= 3)
+            .map(|(i, next_step)| step(&adapters[i..], next_step, target_output, &mut cache))
             .sum();
         cache.insert(current_output, count);
         count

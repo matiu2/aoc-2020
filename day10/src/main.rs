@@ -41,7 +41,6 @@ fn find_joltage(mut input: Vec<usize>) -> Option<usize> {
     input.into_iter().for_each(|jolt| {
         // How big is the step ?
         let jump_size = jolt - current;
-        dbg!(current, jolt, jump_size, target);
         // Store the new current joltage
         current = jolt;
         // Handle the jump size

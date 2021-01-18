@@ -11,11 +11,17 @@
 
 use std::fs::read_to_string;
 
+use day10::find_combinations;
+
 fn main() {
     let input = read_to_string("input.txt").expect("Unable to read input.txt");
     let input: Vec<usize> = input.lines().map(|line| line.parse().unwrap()).collect();
-    let answer = find_joltage(input).unwrap();
+    let answer = find_joltage(input.clone()).unwrap();
     println!("Day 10 - Part 1: {}", answer);
+
+    // Part 2 - count combinations
+    let combinations = find_combinations(input);
+    println!("Day 10 - Part 2: {}", combinations);
 }
 
 /// Finds the answer to part1

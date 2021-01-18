@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 /// Takes a step towards solving a combination. Recursive function
 ///
 /// # Arguments
@@ -7,8 +9,15 @@
 ///  * target_output: The output we hope to reach to power our laptop
 ///
 /// Returns the number of combinations found that add up to the target_output
-fn step(adapters: &[usize], current_output: usize, target_output: usize) -> usize {
-    if current_output == target_output {
+fn step(
+    adapters: &[usize],
+    current_output: usize,
+    target_output: usize,
+    mut cache: &mut HashMap<usize, usize>,
+) -> usize {
+    if let Some(count) = cache.get(&current_output) {
+        *count
+    } else if current_output == target_output {
         // We've reached a valid combination, exit, and count it
         // We've recursed down to the bottom
         1
@@ -21,12 +30,14 @@ fn step(adapters: &[usize], current_output: usize, target_output: usize) -> usiz
             // If it can't find the exact place, it'll give us the place where it would be inserted
             .unwrap_or_else(|pos| pos);
         dbg!(current_output, start);
-        adapters[start..]
+        let count = adapters[start..]
             .iter()
             .cloned()
             .take_while(|adapter_output| *adapter_output - current_output <= 3)
-            .map(|next_step| step(&adapters, next_step, target_output))
-            .sum()
+            .map(|next_step| step(&adapters, next_step, target_output, &mut cache))
+            .sum();
+        cache.insert(current_output, count);
+        count
     }
 }
 
@@ -36,8 +47,10 @@ pub fn find_combinations(mut adapters: Vec<usize>) -> usize {
     adapters.sort();
     // We don't add the +3 because we know if we reach the maximum adapter's output we've made a combination
     let target = *adapters.last().unwrap_or(&0);
+    // Cache
+    let mut cache = HashMap::new();
     // Count the combinations
-    step(&adapters, 0, target)
+    step(&adapters, 0, target, &mut cache)
 }
 
 #[cfg(test)]

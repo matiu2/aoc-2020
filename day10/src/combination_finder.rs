@@ -26,9 +26,8 @@ fn step(
             .iter()
             .cloned()
             .enumerate()
-            .skip_while(|(_i, adapter_output)| *adapter_output == current_output)
             .take_while(|(_i, adapter_output)| *adapter_output - current_output <= 3)
-            .map(|(i, next_step)| step(&adapters[i..], next_step, target_output, &mut cache))
+            .map(|(i, next_step)| step(&adapters[i + 1..], next_step, target_output, &mut cache))
             .sum();
         cache.insert(current_output, count);
         count

@@ -1,7 +1,7 @@
 use parse_display::{Display, FromStr};
 
 /// A grid space in the waiting room
-#[derive(Display, FromStr, PartialEq, Debug, Clone, Copy)]
+#[derive(Display, FromStr, PartialEq, Eq, Debug, Clone, Copy)]
 pub enum Space {
     #[display("#")]
     OccupiedSeat,
@@ -23,7 +23,7 @@ impl Space {
 }
 
 /// All the spaces in the waiting room
-#[derive(Default, Debug)]
+#[derive(Default, Debug, PartialEq, Eq)]
 pub struct Spaces {
     // Data is stored [row,row,row]
     // So to access coordinate (x,y), index is y * width + x
@@ -102,9 +102,6 @@ impl Spaces {
     pub fn adjacent(&self, row: usize, col: usize) -> Vec<&Space> {
         // All possible directions we can go
         let deltas = [-1, 0, 1];
-        if row == 0 && col == 9 {
-            dbg!(row, col, self.width, self.height);
-        }
         // Go every direction
         deltas
             .iter()
@@ -127,6 +124,11 @@ impl Spaces {
             // coordinates to actual Spaces
             .flat_map(|(x, y)| self.get(x, y))
             .collect()
+    }
+
+    /// Returns the number of occupied seats
+    pub fn count_occupied(&self) -> usize {
+        self.data.iter().filter(|space| space.is_occupied()).count()
     }
 }
 

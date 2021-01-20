@@ -8,4 +8,3 @@ edition = "2018"
 
 [dependencies]
 parse-display = "0.4.1"
-thiserror = "1.0.23"

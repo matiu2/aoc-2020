@@ -30,6 +30,21 @@ Each turn:
 Keep running turns / rounds until the state stabalizes. How many seats end up occupied ?
 */
 
+use std::fs::read_to_string;
+
+use day11::Spaces;
+
 fn main() {
-    println!("Hello, world!");
+    let input = read_to_string("input.txt").expect("Unable to read input.txt");
+    let mut spaces: Spaces = input.parse().expect("Unable to read input");
+    let mut next_step = spaces.step();
+    while spaces != next_step {
+        spaces = next_step;
+        next_step = spaces.step();
+    }
+    // Count the occupied seats
+    println!(
+        "Day 11 - Part 1 - Occupied seats: {}",
+        spaces.count_occupied()
+    )
 }

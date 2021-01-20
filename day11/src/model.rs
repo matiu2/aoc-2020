@@ -1,7 +1,7 @@
 use parse_display::{Display, FromStr};
 
 /// A grid space in the waiting room
-#[derive(Display, FromStr, PartialEq, Debug)]
+#[derive(Display, FromStr, PartialEq, Debug, Clone, Copy)]
 pub enum Space {
     #[display("#")]
     OccupiedSeat,
@@ -18,24 +18,6 @@ impl Space {
             true
         } else {
             false
-        }
-    }
-
-    /// Occupies a seat - panics if you try to occupy the floor or an already occupied seat
-    fn occupy(&mut self) {
-        if let Space::EmptySeat = self {
-            *self = Space::OccupiedSeat
-        } else {
-            panic!("Tried to occupy {:?}", self)
-        }
-    }
-
-    /// Vacates a seat - panics if you try to occupy the floor or an already empty seat
-    fn vacate(&mut self) {
-        if let Space::OccupiedSeat = self {
-            *self = Space::OccupiedSeat
-        } else {
-            panic!("Tried to occupy {:?}", self)
         }
     }
 }
@@ -55,15 +37,19 @@ pub struct Spaces {
 
 impl Spaces {
     /// Runs through one step of iteration
-    /// Returns true if it has arrived at a stable state
-    pub fn step(&mut self) -> bool {
-        let mut dirty = false;
-        for row in 0..self.height {
-            for col in 0..self.width {
-                let space = self.get_mut(col, row).expect(&format!(
-                    "Unable to get a space for row: {} col: {}",
-                    row, col
-                ));
+    /// Returns the new state
+    pub fn step(&self) -> Self {
+        let data: Vec<Space> = (0..self.height)
+            .flat_map(|row| (0..self.width).map(move |col| (row, col)))
+            .map(|(row, col)| {
+                (
+                    row,
+                    col,
+                    self.get(col, row)
+                        .expect(&format!("Unabel to get cell at row: {} col: {}", row, col)),
+                )
+            })
+            .map(|(row, col, space)| {
                 match space {
                     Space::EmptySeat => {
                         // If a seat is empty (L) and there are no occupied seats
@@ -73,9 +59,10 @@ impl Spaces {
                             .iter()
                             .all(|space| !space.is_occupied())
                         {
-                            dirty = true;
                             // Sit in the chair
-                            self.occupy(row, col);
+                            Space::OccupiedSeat
+                        } else {
+                            *space
                         }
                     }
                     Space::OccupiedSeat => {
@@ -90,27 +77,22 @@ impl Spaces {
                             .count()
                             == 4
                         {
-                            dirty = true;
                             // Get out of the chair
-                            self.vacate(row, col);
+                            Space::EmptySeat
+                        } else {
+                            *space
                         }
                     }
                     // We don't care about floor - nothing changes there
-                    Space::Floor => (),
-                };
-            }
+                    Space::Floor => *space,
+                }
+            })
+            .collect();
+        Spaces {
+            data,
+            height: self.height,
+            width: self.width,
         }
-        dirty
-    }
-
-    /// Occupies an empty seat - panics for anything else
-    fn occupy(&mut self, row: usize, col: usize) {
-        self.get_mut(col, row).map(|space| space.occupy());
-    }
-
-    /// Occupies an empty seat - panics for anything else
-    fn vacate(&mut self, row: usize, col: usize) {
-        self.get_mut(col, row).map(|space| space.vacate());
     }
 
     /// Returns a vec of adjacent spaces to a given space
@@ -120,27 +102,30 @@ impl Spaces {
     pub fn adjacent(&self, row: usize, col: usize) -> Vec<&Space> {
         // All possible directions we can go
         let deltas = [-1, 0, 1];
+        if row == 0 && col == 9 {
+            dbg!(row, col, self.width, self.height);
+        }
         // Go every direction
         deltas
             .iter()
             .flat_map(|dx| deltas.iter().map(move |dy| (dx, dy)))
             // Don't include the current space
-            .filter(|(&dx, &dy)| dx != 0 && dy != 0)
+            .filter(|(&dx, &dy)| !(dx == 0 && dy == 0))
             // Do the math as i64 (rather than usize)
             // Don't go left if we're already at the left
             .filter(|(&dx, _dy)| !(col == 0 && dx == -1))
             // Don't go right if we're at the end
-            .filter(|(&dx, _dy)| !(col == self.width + 1 && dx == 1))
+            .filter(|(&dx, _dy)| !(col == self.width - 1 && dx == 1))
             // Don't go up if we're at the top
             .filter(|(_dx, &dy)| !(row == 0 && dy == -1))
             // Don't go up if we're at the top
-            .filter(|(_dx, &dy)| !(row == self.height + 1 && dy == 1))
+            .filter(|(_dx, &dy)| !(row == self.height - 1 && dy == 1))
             // Convert the deltas into coordinates
-            .map(|(dx, dy)| (row as i64 + dy, col as i64 + dx))
+            .map(|(dx, dy)| (col as i64 + dx, row as i64 + dy))
             // i64 to usize
             .map(|(x, y)| (x as usize, y as usize))
             // coordinates to actual Spaces
-            .flat_map(|(x, y)| self.get(y, x))
+            .flat_map(|(x, y)| self.get(x, y))
             .collect()
     }
 }
@@ -177,11 +162,6 @@ impl Spaces {
     /// Retrieves the space at column x and row y, if any
     pub fn get(&self, x: usize, y: usize) -> Option<&Space> {
         self.data.get(y * self.width + x)
-    }
-
-    /// Allows us to change a seat
-    fn get_mut(&mut self, x: usize, y: usize) -> Option<&mut Space> {
-        self.data.get_mut(y * self.width + x)
     }
 
     /// Read-only width - set it using FromStr when you build this struct
@@ -227,8 +207,6 @@ L.LLLLL.LL
 LLLLLLLLLL
 L.LLLLLL.L
 L.LLLLL.LL"#;
-        let mut spaces: super::Spaces = input.parse().unwrap();
-        spaces.step();
         let step_1_expected = r#"#.##.##.##
 #######.##
 #.#.#..#..
@@ -239,7 +217,64 @@ L.LLLLL.LL"#;
 ##########
 #.######.#
 #.#####.##"#;
-        println!("{}", spaces);
+        let step_2_expected = r#"#.LL.L#.##
+#LLLLLL.L#
+L.L.L..L..
+#LLL.LL.L#
+#.LL.LL.LL
+#.LLLL#.##
+..L.L.....
+#LLLLLLLL#
+#.LLLLLL.L
+#.#LLLL.##"#;
+        let step_3_expected = r#"#.##.L#.##
+#L###LL.L#
+L.#.#..#..
+#L##.##.L#
+#.##.LL.LL
+#.###L#.##
+..#.#.....
+#L######L#
+#.LL###L.L
+#.#L###.##"#;
+        let step_4_expected = r#"#.#L.L#.##
+#LLL#LL.L#
+L.L.L..#..
+#LLL.##.L#
+#.LL.LL.LL
+#.LL#L#.##
+..L.L.....
+#L#LLLL#L#
+#.LLLLLL.L
+#.#L#L#.##"#;
+        let step_5_expected = r#"#.#L.L#.##
+#LLL#LL.L#
+L.#.L..#..
+#L##.##.L#
+#.#L.LL.LL
+#.#L#L#.##
+..L.L.....
+#L#L##L#L#
+#.LLLLLL.L
+#.#L#L#.##"#;
+
+        let spaces: super::Spaces = input.parse().unwrap();
+        let spaces = spaces.step();
         assert_eq!(step_1_expected, format!("{}", spaces));
+        // Step 2
+        let spaces = spaces.step();
+        assert_eq!(step_2_expected, format!("{}", spaces));
+        // Step 3
+        let spaces = spaces.step();
+        assert_eq!(step_3_expected, format!("{}", spaces));
+        // Step 4
+        let spaces = spaces.step();
+        assert_eq!(step_4_expected, format!("{}", spaces));
+        // Step 5
+        let spaces = spaces.step();
+        assert_eq!(step_5_expected, format!("{}", spaces));
+        // Step 6 -- Should be the same as step 5
+        let spaces = spaces.step();
+        assert_eq!(step_5_expected, format!("{}", spaces));
     }
 }

@@ -1,4 +1,5 @@
 use parse_display::{Display, FromStr};
+mod vision;
 
 /// A grid space in the waiting room
 #[derive(Display, FromStr, PartialEq, Eq, Debug, Clone, Copy)]

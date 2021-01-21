@@ -41,6 +41,52 @@ impl Spaces {
 
     /// Returns the new state
     pub fn step(&self) -> Self {
+        let converter = |x, y, space| {
+            match space {
+                Space::EmptySeat => {
+                    // If a seat is empty (L) and there are no occupied seats
+                    // adjacent to it, the seat becomes occupied.
+                    if self.adjacent(x, y).iter().all(|space| !space.is_occupied()) {
+                        // Sit in the chair
+                        Space::OccupiedSeat
+                    } else {
+                        space
+                    }
+                }
+                Space::OccupiedSeat => {
+                    // If a seat is occupied (#) and four or more seats
+                    // adjacent to it are also occupied, the seat becomes
+                    // empty.
+                    if self
+                        .adjacent(x, y)
+                        .iter()
+                        .filter(|space| space.is_occupied())
+                        .take(4)
+                        .count()
+                        == 4
+                    {
+                        // Get out of the chair
+                        Space::EmptySeat
+                    } else {
+                        space
+                    }
+                }
+                // We don't care about floor - nothing changes there
+                Space::Floor => space,
+            }
+        };
+        self.step_generic(converter)
+    }
+
+    /// Returns the new state
+    ///
+    /// # Type Arguments
+    ///
+    /// C: Converter function, takes a (x, y, Space) and returns an Space
+    fn step_generic<C>(&self, converter_func: C) -> Self
+    where
+        C: Fn(usize, usize, Space) -> Space,
+    {
         let data: Vec<Space> = (0..self.height)
             .flat_map(|y| (0..self.width).map(move |x| (x, y)))
             .map(|(x, y)| {
@@ -51,40 +97,7 @@ impl Spaces {
                         .expect(&format!("Unabel to get cell at x: {} y: {}", x, y)),
                 )
             })
-            .map(|(x, y, space)| {
-                match space {
-                    Space::EmptySeat => {
-                        // If a seat is empty (L) and there are no occupied seats
-                        // adjacent to it, the seat becomes occupied.
-                        if self.adjacent(x, y).iter().all(|space| !space.is_occupied()) {
-                            // Sit in the chair
-                            Space::OccupiedSeat
-                        } else {
-                            *space
-                        }
-                    }
-                    Space::OccupiedSeat => {
-                        // If a seat is occupied (#) and four or more seats
-                        // adjacent to it are also occupied, the seat becomes
-                        // empty.
-                        if self
-                            .adjacent(x, y)
-                            .iter()
-                            .filter(|space| space.is_occupied())
-                            .take(4)
-                            .count()
-                            == 4
-                        {
-                            // Get out of the chair
-                            Space::EmptySeat
-                        } else {
-                            *space
-                        }
-                    }
-                    // We don't care about floor - nothing changes there
-                    Space::Floor => *space,
-                }
-            })
+            .map(|(x, y, space)| converter_func(x, y, *space))
             .collect();
         Spaces {
             data,

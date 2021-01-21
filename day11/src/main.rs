@@ -47,4 +47,5 @@ fn main() {
         "Day 11 - Part 1 - Occupied seats: {}",
         spaces.count_occupied()
     )
+    // Part 2
 }

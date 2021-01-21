@@ -46,6 +46,17 @@ fn main() {
     println!(
         "Day 11 - Part 1 - Occupied seats: {}",
         spaces.count_occupied()
-    )
-    // Part 2
+    );
+    // Part 2 - Using line if sight technique
+    spaces = input.parse().unwrap();
+    let mut next_step = spaces.step_part2();
+    while spaces != next_step {
+        spaces = next_step;
+        next_step = spaces.step_part2();
+    }
+    // Count the occupied seats
+    println!(
+        "Day 11 - Part 2 - Occupied seats: {}",
+        spaces.count_occupied()
+    );
 }

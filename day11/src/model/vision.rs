@@ -9,9 +9,9 @@ impl Spaces {
     /// Starting at grid space x (col number) and y (row number),
     /// It'll return the number of occupied seats visible (along the 8 direction lines)
     /// An empty seat blocks the view of occupied seats
-    /// If you only care that there are `any` occupied chairs visible, set `any`
-    /// to true, and the function will exit as soon as it finds an occupied space
-    pub fn count_visible_seat_searchs(&self, x: usize, y: usize, any: bool) -> usize {
+    /// Once the count hits `max` the function will return early. `max` can be
+    /// from 1-8 because we search in 8 directions
+    pub fn count_visible_occupied_seats(&self, x: usize, y: usize, max: usize) -> usize {
         let mut count = 0;
         // Closure used to see if a space matches our search
         let seat_search = |x, y| -> Option<bool> {
@@ -31,7 +31,7 @@ impl Spaces {
             .unwrap_or(false)
         {
             count += 1;
-            if any && count > 0 {
+            if count >= max {
                 return count;
             }
         }
@@ -42,7 +42,7 @@ impl Spaces {
             .unwrap_or(false)
         {
             count += 1;
-            if any && count > 0 {
+            if count >= max {
                 return count;
             }
         }
@@ -52,7 +52,7 @@ impl Spaces {
             .unwrap_or(false)
         {
             count += 1;
-            if any && count > 0 {
+            if count >= max {
                 return count;
             }
         }
@@ -62,7 +62,7 @@ impl Spaces {
             .unwrap_or(false)
         {
             count += 1;
-            if any && count > 0 {
+            if count >= max {
                 return count;
             }
         }
@@ -74,7 +74,7 @@ impl Spaces {
             .unwrap_or(false)
         {
             count += 1;
-            if any && count > 0 {
+            if count >= max {
                 return count;
             }
         }
@@ -85,7 +85,7 @@ impl Spaces {
             .unwrap_or(false)
         {
             count += 1;
-            if any && count > 0 {
+            if count >= max {
                 return count;
             }
         }
@@ -96,7 +96,7 @@ impl Spaces {
             .unwrap_or(false)
         {
             count += 1;
-            if any && count > 0 {
+            if count >= max {
                 return count;
             }
         }
@@ -107,11 +107,43 @@ impl Spaces {
             .unwrap_or(false)
         {
             count += 1;
-            if any && count > 0 {
+            if count >= max {
                 return count;
             }
         }
         count
+    }
+
+    /// Takes a step forward in the animation, returning the new state
+    pub fn step_part2(&self) -> Self {
+        let converter = |x, y, space| {
+            match space {
+                Space::EmptySeat => {
+                    // If a seat is empty (L) and there are no occupied seats
+                    // in line of sight, the seat becomes occupied.
+                    if self.count_visible_occupied_seats(x, y, 1) == 0 {
+                        // Sit in the chair
+                        Space::OccupiedSeat
+                    } else {
+                        space
+                    }
+                }
+                Space::OccupiedSeat => {
+                    // If a seat is occupied (#) and five or more seats
+                    // adjacent to it are also occupied, the seat becomes
+                    // empty.
+                    if self.count_visible_occupied_seats(x, y, 5) == 5 {
+                        // Get out of the chair
+                        Space::EmptySeat
+                    } else {
+                        space
+                    }
+                }
+                // We don't care about floor - nothing changes there
+                Space::Floor => space,
+            }
+        };
+        self.step_generic(converter)
     }
 }
 
@@ -131,8 +163,9 @@ mod tests {
 #........
 ...#....."#;
         let spaces: Spaces = input.parse().unwrap();
-        assert_eq!(8, spaces.count_visible_seat_searchs(3, 4, false));
-        assert_eq!(1, spaces.count_visible_seat_searchs(3, 4, true));
+        assert_eq!(8, spaces.count_visible_occupied_seats(3, 4, 8));
+        assert_eq!(4, spaces.count_visible_occupied_seats(3, 4, 4));
+        assert_eq!(1, spaces.count_visible_occupied_seats(3, 4, 1));
     }
 
     #[test]
@@ -141,10 +174,10 @@ mod tests {
 .L.L.#.#.#.#.
 .............";
         let spaces: Spaces = input.parse().unwrap();
-        assert_eq!(0, spaces.count_visible_seat_searchs(1, 1, true));
-        assert_eq!(0, spaces.count_visible_seat_searchs(1, 1, false));
-        assert_eq!(1, spaces.count_visible_seat_searchs(3, 1, true));
-        assert_eq!(1, spaces.count_visible_seat_searchs(3, 1, false));
+        assert_eq!(0, spaces.count_visible_occupied_seats(1, 1, 1));
+        assert_eq!(0, spaces.count_visible_occupied_seats(1, 1, 8));
+        assert_eq!(1, spaces.count_visible_occupied_seats(3, 1, 1));
+        assert_eq!(1, spaces.count_visible_occupied_seats(3, 1, 8));
     }
 
     #[test]
@@ -157,7 +190,99 @@ mod tests {
 #.#.#.#
 .##.##.";
         let spaces: Spaces = input.parse().unwrap();
-        assert_eq!(0, spaces.count_visible_seat_searchs(3, 3, true));
-        assert_eq!(0, spaces.count_visible_seat_searchs(3, 3, false));
+        assert_eq!(0, spaces.count_visible_occupied_seats(3, 3, 1));
+        assert_eq!(0, spaces.count_visible_occupied_seats(3, 3, 8));
+    }
+
+    #[test]
+    fn test_step_part_2() {
+        let expected_steps = vec![
+            "L.LL.LL.LL
+LLLLLLL.LL
+L.L.L..L..
+LLLL.LL.LL
+L.LL.LL.LL
+L.LLLLL.LL
+..L.L.....
+LLLLLLLLLL
+L.LLLLLL.L
+L.LLLLL.LL",
+            "#.##.##.##
+#######.##
+#.#.#..#..
+####.##.##
+#.##.##.##
+#.#####.##
+..#.#.....
+##########
+#.######.#
+#.#####.##",
+            "#.LL.LL.L#
+#LLLLLL.LL
+L.L.L..L..
+LLLL.LL.LL
+L.LL.LL.LL
+L.LLLLL.LL
+..L.L.....
+LLLLLLLLL#
+#.LLLLLL.L
+#.LLLLL.L#",
+            "#.L#.##.L#
+#L#####.LL
+L.#.#..#..
+##L#.##.##
+#.##.#L.##
+#.#####.#L
+..#.#.....
+LLL####LL#
+#.L#####.L
+#.L####.L#",
+            "#.L#.L#.L#
+#LLLLLL.LL
+L.L.L..#..
+##LL.LL.L#
+L.LL.LL.L#
+#.LLLLL.LL
+..L.L.....
+LLLLLLLLL#
+#.LLLLL#.L
+#.L#LL#.L#",
+            "#.L#.L#.L#
+#LLLLLL.LL
+L.L.L..#..
+##L#.#L.L#
+L.L#.#L.L#
+#.L####.LL
+..#.#.....
+LLL###LLL#
+#.LLLLL#.L
+#.L#LL#.L#",
+            "#.L#.L#.L#
+#LLLLLL.LL
+L.L.L..#..
+##L#.#L.L#
+L.L#.LL.L#
+#.LLLL#.LL
+..#.L.....
+LLL###LLL#
+#.LLLLL#.L
+#.L#LL#.L#",
+        ];
+        let mut spaces: Spaces = expected_steps[0].parse().unwrap();
+        assert_eq!(expected_steps[0], &format!("{}", &spaces));
+        for (i, expected) in expected_steps.iter().enumerate().skip(1) {
+            spaces = spaces.step_part2();
+            let got = format!("{}", &spaces);
+            if expected != &got {
+                println!(
+                    "Step {}\nPrevious:\n{}\n\nExpected:\n{}\n\nGot:\n{}",
+                    i,
+                    expected_steps[i - 1],
+                    expected,
+                    got
+                );
+            }
+            assert_eq!(expected, &got, "step {} doesn't match", i);
+        }
     }
 }

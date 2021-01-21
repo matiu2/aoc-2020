@@ -1,5 +1,4 @@
 use parse_display::{Display, FromStr};
-use Pointing::{East, North, South, West};
 
 #[derive(Display, FromStr, PartialEq, Debug)]
 pub enum Direction {
@@ -67,7 +66,7 @@ impl Pointing {
 
 impl Default for Pointing {
     fn default() -> Self {
-        East
+        Pointing::East
     }
 }
 
@@ -82,6 +81,11 @@ pub struct State {
 }
 
 impl State {
+    /// manhattan distance from our origin
+    pub fn distance(&self) -> i64 {
+        self.x + self.y
+    }
+
     /// Update our state
     pub fn direction(&mut self, direction: Direction) {
         match direction {
@@ -108,7 +112,6 @@ impl State {
 
 #[cfg(test)]
 mod tests {
-    use std::default;
 
     use super::{Direction, Pointing, State};
 

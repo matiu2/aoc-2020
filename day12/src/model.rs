@@ -3,7 +3,7 @@ use parse_display::{Display, FromStr};
 pub mod part1;
 pub mod part2;
 
-#[derive(Display, FromStr, PartialEq, Debug)]
+#[derive(Display, FromStr, PartialEq, Debug, Clone, Copy)]
 pub enum Direction {
     // Move (but don't turn North)
     #[display("N{0}")]

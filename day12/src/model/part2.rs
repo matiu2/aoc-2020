@@ -35,7 +35,7 @@ impl State {
     }
 
     /// Process one instruction and move the ship or the waypoint
-    pub fn process_instruction(&mut self, direction: Direction) {
+    pub fn process_instruction(&mut self, direction: &Direction) {
         match direction {
             // Move the waypoint / direction finder North
             Direction::North(n) => self.way_y -= n,
@@ -67,7 +67,6 @@ impl State {
 
 #[cfg(test)]
 mod tests {
-    use std::default;
 
     use crate::Direction;
 
@@ -80,12 +79,12 @@ mod tests {
         // F10 moves the ship to the waypoint 10 times (a total of 100 units east
         // and 10 units north), leaving the ship at east 100, north 10. The
         // waypoint stays 10 units east and 1 unit north of the ship.
-        ship.process_instruction(Direction::Forward(10));
+        ship.process_instruction(&Direction::Forward(10));
         assert_eq!(ship.x, 100);
         assert_eq!(ship.y, -10);
         // N3 moves the waypoint 3 units north to 10 units east and 4 units north
         // of the ship. The ship remains at east 100, north 10.
-        ship.process_instruction(Direction::North(3));
+        ship.process_instruction(&Direction::North(3));
         assert_eq!(ship.x, 100);
         assert_eq!(ship.y, -10);
         assert_eq!(ship.way_x, 10);
@@ -93,7 +92,7 @@ mod tests {
         // F7 moves the ship to the waypoint 7 times (a total of 70 units east and
         // 28 units north), leaving the ship at east 170, north 38. The waypoint
         // stays 10 units east and 4 units north of the ship.
-        ship.process_instruction(Direction::Forward(7));
+        ship.process_instruction(&Direction::Forward(7));
         assert_eq!(ship.x, 170);
         assert_eq!(ship.y, -38);
         assert_eq!(ship.way_x, 10);
@@ -101,7 +100,7 @@ mod tests {
         // R90 rotates the waypoint around the ship clockwise 90 degrees, moving
         // it to 4 units east and 10 units south of the ship. The ship remains at
         // east 170, north 38.
-        ship.process_instruction(Direction::Right(90));
+        ship.process_instruction(&Direction::Right(90));
         assert_eq!(ship.x, 170);
         assert_eq!(ship.y, -38);
         assert_eq!(ship.way_x, 4);
@@ -109,7 +108,7 @@ mod tests {
         // F11 moves the ship to the waypoint 11 times (a total of 44 units east
         // and 110 units south), leaving the ship at east 214, south 72. The
         // waypoint stays 4 units east and 10 units south of the ship.
-        ship.process_instruction(Direction::Forward(11));
+        ship.process_instruction(&Direction::Forward(11));
         assert_eq!(ship.x, 214);
         assert_eq!(ship.y, 72);
         assert_eq!(ship.way_x, 4);

@@ -17,7 +17,7 @@ impl State {
     }
 
     /// Update our state
-    pub fn process_instruction(&mut self, direction: Direction) {
+    pub fn process_instruction(&mut self, direction: &Direction) {
         match direction {
             Direction::North(n) => self.y -= n,
             Direction::South(n) => self.y += n,
@@ -30,10 +30,10 @@ impl State {
             Direction::Right(180) => self.pointing.reverse(),
             Direction::Right(270) => self.pointing.left(),
             Direction::Forward(n) => match self.pointing {
-                Pointing::North => self.process_instruction(Direction::North(n)),
-                Pointing::South => self.process_instruction(Direction::South(n)),
-                Pointing::East => self.process_instruction(Direction::East(n)),
-                Pointing::West => self.process_instruction(Direction::West(n)),
+                Pointing::North => self.process_instruction(&Direction::North(*n)),
+                Pointing::South => self.process_instruction(&Direction::South(*n)),
+                Pointing::East => self.process_instruction(&Direction::East(*n)),
+                Pointing::West => self.process_instruction(&Direction::West(*n)),
             },
             other => unreachable!("Unexpected instruction: {:?}", other),
         }
@@ -54,27 +54,27 @@ mod tests {
         assert_eq!(Pointing::East, ship.pointing);
         // Check each direction
         // Forward 10
-        ship.process_instruction(Direction::Forward(10));
+        ship.process_instruction(&Direction::Forward(10));
         assert_eq!(10, ship.x);
         assert_eq!(0, ship.y);
         assert_eq!(Pointing::East, ship.pointing);
         // North 3
-        ship.process_instruction(Direction::North(3));
+        ship.process_instruction(&Direction::North(3));
         assert_eq!(10, ship.x);
         assert_eq!(-3, ship.y);
         assert_eq!(Pointing::East, ship.pointing);
         // Forward 7 (still facing east)
-        ship.process_instruction(Direction::Forward(7));
+        ship.process_instruction(&Direction::Forward(7));
         assert_eq!(17, ship.x);
         assert_eq!(-3, ship.y);
         assert_eq!(Pointing::East, ship.pointing);
         // Right 90 (now facing south)
-        ship.process_instruction(Direction::Right(90));
+        ship.process_instruction(&Direction::Right(90));
         assert_eq!(17, ship.x);
         assert_eq!(-3, ship.y);
         assert_eq!(Pointing::South, ship.pointing);
         // Forward 11 (now facing south)
-        ship.process_instruction(Direction::Forward(11));
+        ship.process_instruction(&Direction::Forward(11));
         assert_eq!(17, ship.x);
         assert_eq!(8, ship.y);
         assert_eq!(Pointing::South, ship.pointing);

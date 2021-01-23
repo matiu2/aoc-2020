@@ -56,12 +56,41 @@ pub fn calculate(bus_ids: &[Option<usize>]) -> Option<usize> {
     sorted.sort_by_key(|(_i, id)| *id);
 
     // Take the biggest number and its offset for later
-    let (offset, step_size) = sorted.pop()?;
+    let (offset, mut step_size) = sorted.pop()?;
+    // Set the start minute that we're trying right now
+    // We want to get each bus arriving sequentially
+    let mut base = step_size - offset;
+
+    // So far our base will have the bus with the highest ID arriving at its
+    // `offset` minute. We jump up in steps of the largest bus ID, so each step
+    // will always have the largest bus arriving in its place.
+    //
+    // Now we choose the next target bus_id and its offset (how many minutes
+    // after the base it arrives)
+    let (mut offset, mut target) = sorted.pop()?;
 
     // Walk over the biggest numbers, trying to match all other numbers
-    ((step_size - offset)..usize::MAX)
-        .step_by(step_size)
-        .find(|base| sorted.iter().all(|(i, id)| check_number(*base, *id, *i)))
+    loop {
+        // If the base (start minute) + the offset (minutes after start this bus
+        // should arrive) have no remainers for this bus, it means this bus,
+        // plus all before it are arriving in the right sequence.
+        if (base + offset) % target == 0 {
+            // We've found our bus_id
+            // We can now multiply our step size to search faster
+            step_size = step_size * target;
+            // Get the next bus_id and offset (in minutes from the base minute)
+            if let Some(next) = sorted.pop() {
+                offset = next.0;
+                target = next.1;
+            } else {
+                // If there are no more busses, we've found the minute that
+                // starts the sequence of busses coming in
+                break Some(base);
+            }
+        } else {
+            base += step_size;
+        }
+    }
 }
 
 #[cfg(test)]
@@ -104,8 +133,8 @@ mod tests {
 
     #[test]
     fn test_calculate() {
-        assert_eq!(do_calculate("7,13,x,x,59,x,31,19"), Some(1068781));
         assert_eq!(do_calculate("17,x,13,19"), Some(3417));
+        assert_eq!(do_calculate("7,13,x,x,59,x,31,19"), Some(1068781));
         assert_eq!(do_calculate("67,7,59,61"), Some(754018));
         assert_eq!(do_calculate("67,x,7,59,61"), Some(779210));
         assert_eq!(do_calculate("67,7,x,59,61"), Some(1261476));

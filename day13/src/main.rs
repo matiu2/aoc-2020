@@ -1,4 +1,5 @@
 use anyhow::{anyhow, Result};
+use day13::part_2;
 use std::fs::read_to_string;
 
 /// Parses the puzzle input and returns (earliest_you_can_leave, bus_ids)
@@ -31,6 +32,12 @@ fn main() -> Result<()> {
         "Day13 - Part 1 - Bus ID: {} minutes to wait: {} answer: {}",
         bus_id, to_wait, answer
     );
+    // Part 2
+    let input = read_to_string("input.txt")?;
+    let line = input.lines().nth(1).expect("More input lines");
+    let bus_ids = part_2::parse(line)?;
+    let answer = part_2::caculate(&bus_ids).expect("An answer");
+    println!("Day13 - Part 2 - answer: {}", answer);
     Ok(())
 }
 

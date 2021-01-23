@@ -35,11 +35,33 @@ fn test_number(start: usize, bus_ids: &[Option<usize>]) -> Option<bool> {
 }
 
 /// Given the list of bus_ids, returns the earliest point where each bus_id leaves one_minute after the other, in the order given, (if any)
-pub fn caculate(bus_ids: &[Option<usize>]) -> Option<usize> {
+pub fn old_calculate(bus_ids: &[Option<usize>]) -> Option<usize> {
     let first = bus_ids.first().cloned().flatten().unwrap();
     (0..usize::MAX)
         .step_by(first)
         .find(|earliest| test_number(*earliest, bus_ids).unwrap_or(false))
+}
+
+pub fn check_number(base: usize, number_to_check: usize, index: usize) -> bool {
+    (base + index) % number_to_check == 0
+}
+
+pub fn calculate(bus_ids: &[Option<usize>]) -> Option<usize> {
+    // Sort the numbers, biggest first
+    let mut sorted: Vec<(usize, usize)> = bus_ids
+        .iter()
+        .enumerate()
+        .flat_map(|(i, id)| id.map(|id| (i, id)))
+        .collect();
+    sorted.sort_by_key(|(_i, id)| *id);
+
+    // Take the biggest number and its offset for later
+    let (offset, step_size) = sorted.pop()?;
+
+    // Walk over the biggest numbers, trying to match all other numbers
+    ((step_size - offset)..usize::MAX)
+        .step_by(step_size)
+        .find(|base| sorted.iter().all(|(i, id)| check_number(*base, *id, *i)))
 }
 
 #[cfg(test)]
@@ -75,19 +97,18 @@ mod tests {
         Ok(())
     }
 
-    fn do_test_calculate(input: &str, expected: usize) {
+    fn do_calculate(input: &str) -> Option<usize> {
         let bus_ids = super::parse(input).unwrap();
-        let got = super::caculate(&bus_ids);
-        assert_eq!(got, Some(expected));
+        super::calculate(&bus_ids)
     }
 
     #[test]
     fn test_calculate() {
-        do_test_calculate("7,13,x,x,59,x,31,19", 1068781);
-        do_test_calculate("17,x,13,19", 3417);
-        do_test_calculate("67,7,59,61", 754018);
-        do_test_calculate("67,x,7,59,61", 779210);
-        do_test_calculate("67,7,x,59,61", 1261476);
-        do_test_calculate("1789,37,47,1889", 1202161486);
+        assert_eq!(do_calculate("7,13,x,x,59,x,31,19"), Some(1068781));
+        assert_eq!(do_calculate("17,x,13,19"), Some(3417));
+        assert_eq!(do_calculate("67,7,59,61"), Some(754018));
+        assert_eq!(do_calculate("67,x,7,59,61"), Some(779210));
+        assert_eq!(do_calculate("67,7,x,59,61"), Some(1261476));
+        assert_eq!(do_calculate("1789,37,47,1889"), Some(1202161486));
     }
 }

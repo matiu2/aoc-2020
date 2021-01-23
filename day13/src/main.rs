@@ -36,7 +36,7 @@ fn main() -> Result<()> {
     let input = read_to_string("input.txt")?;
     let line = input.lines().nth(1).expect("More input lines");
     let bus_ids = part_2::parse(line)?;
-    let answer = part_2::caculate(&bus_ids).expect("An answer");
+    let answer = part_2::calculate(&bus_ids).expect("An answer");
     println!("Day13 - Part 2 - answer: {}", answer);
     Ok(())
 }

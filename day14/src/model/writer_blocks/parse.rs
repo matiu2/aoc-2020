@@ -1,8 +1,6 @@
 use anyhow::Error;
 use std::str::FromStr;
 
-use crate::model::WriterBlock;
-
 use super::WriterBlocks;
 
 impl FromStr for WriterBlocks {
@@ -16,7 +14,7 @@ impl FromStr for WriterBlocks {
                 None => s.len(),
             };
             let tmp = &s[start..end];
-            let block: WriterBlock = tmp.parse()?;
+            blocks.push(tmp.parse()?);
             s = &s[end..]
         }
         Ok(Self { blocks })
@@ -26,6 +24,7 @@ impl FromStr for WriterBlocks {
 #[cfg(test)]
 mod tests {
     use crate::model::{Bit, BitMask, MemWriter, WriterBlock, WriterBlocks};
+    use pretty_assertions::assert_eq;
 
     #[test]
     fn test_parse() {
@@ -74,11 +73,12 @@ mem[8] = 456";
                         },
                         MemWriter {
                             location: 8,
-                            value: 0,
+                            value: 456,
                         },
                     ],
                 ),
             ],
         };
+        assert_eq!(got, expected);
     }
 }

@@ -1,9 +1,9 @@
 //! A block with a mask and >= 1 writers
-use std::{collections::HashMap, fmt::Write};
+use std::collections::HashMap;
 
 mod parse;
 
-use super::{BitMask, MemWriter, WriterBlocks};
+use super::{BitMask, MemWriter};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct WriterBlock {
@@ -28,6 +28,7 @@ impl WriterBlock {
 
 #[cfg(test)]
 mod tests {
+    use pretty_assertions::assert_eq;
     use std::collections::HashMap;
 
     use super::WriterBlock;

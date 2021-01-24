@@ -17,13 +17,32 @@ impl WriterBlock {
     pub fn new(mask: BitMask, writers: Vec<MemWriter>) -> WriterBlock {
         WriterBlock { mask, writers }
     }
-}
 
-impl WriterBlock {
     /// Writes our values to `out`
     pub fn write(&self, out: &mut HashMap<usize, usize>) {
         for writer in &self.writers {
             out.insert(writer.location, self.mask.apply_to(writer.value));
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::collections::HashMap;
+
+    use super::WriterBlock;
+
+    #[test]
+    fn test_write() {
+        let input = "mask = XXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXX0X
+mem[8] = 11
+mem[7] = 101
+mem[8] = 0";
+        let block: WriterBlock = input.parse().unwrap();
+        let mut values = HashMap::new();
+        block.write(&mut values);
+        assert_eq!(values.get(&8), Some(&64));
+        assert_eq!(values.get(&7), Some(&101));
+        assert_eq!(values.len(), 2);
     }
 }

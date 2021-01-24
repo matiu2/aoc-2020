@@ -11,6 +11,12 @@ pub struct Bit {
 }
 
 impl Bit {
+    /// Only used so we can create some mockups for testing
+    /// To actuall generate one of these just parse the input
+    #[cfg(test)]
+    pub fn new(position: usize, value: bool) -> Bit {
+        Bit { position, value }
+    }
     fn apply(self, input: &mut usize) {
         if self.value {
             // Set the bit
@@ -22,13 +28,20 @@ impl Bit {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Debug, PartialEq, Eq)]
 pub struct BitMask {
     bits: Vec<Bit>,
 }
 
 impl BitMask {
-    pub fn apply(self, input: &mut usize) {
-        self.bits.iter().for_each(|bit| bit.apply(input));
+    /// Only used in testing to make mockups
+    #[cfg(test)]
+    pub fn new(bits: Vec<Bit>) -> BitMask {
+        BitMask { bits }
+    }
+    /// Applies the bit mask to `input` and returns the new value
+    pub fn apply_to(&self, mut input: usize) -> usize {
+        self.bits.iter().for_each(|bit| bit.apply(&mut input));
+        input
     }
 }

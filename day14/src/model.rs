@@ -12,3 +12,6 @@ pub use writer_blocks::WriterBlocks;
 
 mod part2_mask;
 pub use part2_mask::{BitValue, Part2Mask};
+
+mod part2_block;
+pub use part2_block::Part2Block;

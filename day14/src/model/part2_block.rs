@@ -6,15 +6,17 @@
 //!  * X bits in the mask => handle all combinations of this bit (1 and 0)
 
 use std::collections::HashMap;
+mod parse;
 
 use crate::model::{Instruction, Part2Mask};
 
-pub struct AddressWriter {
+#[derive(PartialEq, Eq, Debug)]
+pub struct Part2Block {
     mask: Part2Mask,
     instructions: Vec<Instruction>,
 }
 
-impl AddressWriter {
+impl Part2Block {
     fn write_one(&self, location: usize, value: usize, memory: &mut HashMap<usize, usize>) {
         for address in self.mask.apply(location) {
             memory.insert(address, value);

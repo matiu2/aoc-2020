@@ -13,13 +13,18 @@ pub enum BitValue {
 
 /// A bitmask, but it's applied to memory locations
 /// A wild bit `X` will write to many locations
-#[derive(Debug, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Part2Mask {
     /// All our bits, anything missing is just a 0
     bits: HashMap<usize, BitValue>,
 }
 
 impl Part2Mask {
+    /// Only used so we can mock these up in tests. In production code, they'll only be created using &str::parse();
+    #[cfg(test)]
+    pub fn new(bits: HashMap<usize, BitValue>) -> Part2Mask {
+        Part2Mask { bits }
+    }
     /// Recursively clone masks until all the possible combinations of wild cards have been tried
     ///
     /// ## Arguments

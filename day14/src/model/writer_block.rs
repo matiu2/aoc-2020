@@ -1,7 +1,6 @@
 //! A block with a mask and >= 1 writers
 use std::collections::HashMap;
 
-mod address_writer;
 mod parse;
 
 use super::{BitMask, Instruction};

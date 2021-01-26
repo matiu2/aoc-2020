@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use anyhow::{anyhow, Context, Error, Result};
 
-use crate::model::{BitMask, MemWriter};
+use crate::model::{BitMask, Instruction};
 
 use super::WriterBlock;
 
@@ -16,13 +16,15 @@ impl FromStr for WriterBlock {
             .ok_or_else(|| anyhow!("No mask line!"))?
             .parse()
             .context("Reading mask")?;
-        let writers: Result<Vec<MemWriter>, Error> = lines
+        let writers: Result<Vec<Instruction>, Error> = lines
             .iter()
             .enumerate()
             .skip(1)
-            .map(|(i, line)| -> Result<MemWriter, _> {
-                line.parse()
-                    .context(format!("Unable to parse MemWriter on line {}: {}", i, line))
+            .map(|(i, line)| -> Result<Instruction, _> {
+                line.parse().context(format!(
+                    "Unable to parse Instruction on line {}: {}",
+                    i, line
+                ))
             })
             .collect();
         let writers = writers?;
@@ -32,7 +34,7 @@ impl FromStr for WriterBlock {
 
 #[cfg(test)]
 mod tests {
-    use crate::model::{writer_block::WriterBlock, Bit, BitMask, MemWriter};
+    use crate::model::{writer_block::WriterBlock, Bit, BitMask, Instruction};
 
     #[test]
     fn test_parse() {
@@ -45,15 +47,15 @@ mem[8] = 0";
             got,
             WriterBlock {
                 writers: vec![
-                    MemWriter {
+                    Instruction {
                         location: 8,
                         value: 11,
                     },
-                    MemWriter {
+                    Instruction {
                         location: 7,
                         value: 101,
                     },
-                    MemWriter {
+                    Instruction {
                         location: 8,
                         value: 0,
                     },

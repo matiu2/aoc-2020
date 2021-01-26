@@ -23,7 +23,7 @@ impl FromStr for WriterBlocks {
 
 #[cfg(test)]
 mod tests {
-    use crate::model::{Bit, BitMask, MemWriter, WriterBlock, WriterBlocks};
+    use crate::model::{Bit, BitMask, Instruction, WriterBlock, WriterBlocks};
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -42,15 +42,15 @@ mem[8] = 456";
                 WriterBlock::new(
                     BitMask::new(vec![Bit::new(1, false), Bit::new(6, true)]),
                     vec![
-                        MemWriter {
+                        Instruction {
                             location: 8,
                             value: 11,
                         },
-                        MemWriter {
+                        Instruction {
                             location: 7,
                             value: 101,
                         },
-                        MemWriter {
+                        Instruction {
                             location: 8,
                             value: 0,
                         },
@@ -63,15 +63,15 @@ mem[8] = 456";
                         Bit::new(6, true),
                     ]),
                     vec![
-                        MemWriter {
+                        Instruction {
                             location: 8,
                             value: 11,
                         },
-                        MemWriter {
+                        Instruction {
                             location: 7,
                             value: 123,
                         },
-                        MemWriter {
+                        Instruction {
                             location: 8,
                             value: 456,
                         },

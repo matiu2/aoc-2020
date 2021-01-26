@@ -4,20 +4,20 @@ use std::collections::HashMap;
 mod address_writer;
 mod parse;
 
-use super::{BitMask, MemWriter};
+use super::{BitMask, Instruction};
 
 /// Takes a mask and a bunch of writers, (basically one block of a program)
 /// and allows you to run that block
 #[derive(Debug, PartialEq, Eq)]
 pub struct WriterBlock {
     mask: BitMask,
-    writers: Vec<MemWriter>,
+    writers: Vec<Instruction>,
 }
 
 impl WriterBlock {
     /// A test only enabled test function so we can mock up blocks to test with
     #[cfg(test)]
-    pub fn new(mask: BitMask, writers: Vec<MemWriter>) -> WriterBlock {
+    pub fn new(mask: BitMask, writers: Vec<Instruction>) -> WriterBlock {
         WriterBlock { mask, writers }
     }
 

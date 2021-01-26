@@ -7,11 +7,11 @@
 
 use std::collections::HashMap;
 
-use crate::model::{LocationMask, MemWriter};
+use crate::model::{Instruction, LocationMask};
 
 pub struct AddressWriter {
     mask: LocationMask,
-    instructions: Vec<MemWriter>,
+    instructions: Vec<Instruction>,
 }
 
 impl AddressWriter {

@@ -1,9 +1,9 @@
 use anyhow::{anyhow, Context, Error};
 use std::str::FromStr;
 
-use super::MemWriter;
+use super::Instruction;
 
-impl FromStr for super::MemWriter {
+impl FromStr for super::Instruction {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -13,7 +13,7 @@ impl FromStr for super::MemWriter {
             ["mem", location, "", "=", value] => {
                 let location = location.parse().context("Bad Location")?;
                 let value = value.parse().context("bad value")?;
-                Ok(MemWriter { location, value })
+                Ok(Instruction { location, value })
             }
             other => Err(anyhow!("Unable to parse {}. Got {:?}", s, other)),
         }
@@ -22,15 +22,15 @@ impl FromStr for super::MemWriter {
 
 #[cfg(test)]
 mod tests {
-    use crate::model::MemWriter;
+    use crate::model::Instruction;
 
     #[test]
     fn test_parse() {
         let input = "mem[8] = 11";
-        let got: MemWriter = input.parse().unwrap();
+        let got: Instruction = input.parse().unwrap();
         assert_eq!(
             got,
-            MemWriter {
+            Instruction {
                 location: 8,
                 value: 11
             }

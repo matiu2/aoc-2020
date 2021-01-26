@@ -1,10 +1,13 @@
 //! A block with a mask and >= 1 writers
 use std::collections::HashMap;
 
+mod address_writer;
 mod parse;
 
 use super::{BitMask, MemWriter};
 
+/// Takes a mask and a bunch of writers, (basically one block of a program)
+/// and allows you to run that block
 #[derive(Debug, PartialEq, Eq)]
 pub struct WriterBlock {
     mask: BitMask,

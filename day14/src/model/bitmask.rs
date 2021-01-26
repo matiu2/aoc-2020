@@ -1,4 +1,5 @@
 mod parse;
+
 /// A bit in the bit modifier
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Bit {

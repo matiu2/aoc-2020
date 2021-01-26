@@ -14,12 +14,12 @@ pub enum BitValue {
 /// A bitmask, but it's applied to memory locations
 /// A wild bit `X` will write to many locations
 #[derive(Debug, Clone)]
-pub struct LocationMask {
+pub struct Part2Mask {
     /// All our bits, anything missing is just a 0
     bits: HashMap<usize, BitValue>,
 }
 
-impl LocationMask {
+impl Part2Mask {
     /// Recursively clone masks until all the possible combinations of wild cards have been tried
     ///
     /// ## Arguments
@@ -52,8 +52,8 @@ impl LocationMask {
                     a.insert(*index, BitValue::On);
                     b.remove(&index); // Basically a 0
                     let mut out = Vec::new();
-                    out.extend(LocationMask::apply_recursive(&a, location));
-                    out.extend(LocationMask::apply_recursive(&b, location));
+                    out.extend(Part2Mask::apply_recursive(&a, location));
+                    out.extend(Part2Mask::apply_recursive(&b, location));
                 });
             out
         }
@@ -62,6 +62,6 @@ impl LocationMask {
     /// Apply the mask to the memory address (location)
     /// As there are wild bits, we may return more locations
     pub fn apply(&self, location: usize) -> Vec<usize> {
-        LocationMask::apply_recursive(&self.bits, location)
+        Part2Mask::apply_recursive(&self.bits, location)
     }
 }

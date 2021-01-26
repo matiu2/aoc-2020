@@ -1,9 +1,9 @@
 use anyhow::{anyhow, Error};
 use std::{collections::HashMap, str::FromStr};
 
-use super::{BitValue, LocationMask};
+use super::{BitValue, Part2Mask};
 
-impl FromStr for LocationMask {
+impl FromStr for Part2Mask {
     type Err = Error;
 
     /// Parses the location mask
@@ -24,7 +24,7 @@ impl FromStr for LocationMask {
                         _ => Some((position, BitValue::Wild)),
                     })
                     .collect();
-                Ok(LocationMask { bits })
+                Ok(Part2Mask { bits })
             }
             _ => Err(anyhow!("Invalid mask line: {}", s)),
         }
@@ -33,12 +33,12 @@ impl FromStr for LocationMask {
 
 #[cfg(test)]
 mod tests {
-    use super::{BitValue, LocationMask};
+    use super::{BitValue, Part2Mask};
     use pretty_assertions::assert_eq;
 
     #[test]
     fn test_parse() -> anyhow::Result<()> {
-        let mask: LocationMask = "mask = 0X1X0011011111X1X000X11X11000X01XX11".parse()?;
+        let mask: Part2Mask = "mask = 0X1X0011011111X1X000X11X11000X01XX11".parse()?;
         // The left most bit (35) is none
         assert_eq!(mask.bits.get(&35), None);
         // The 2nd from left is `X` wild

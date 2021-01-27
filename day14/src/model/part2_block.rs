@@ -17,25 +17,26 @@ pub struct Part2Block {
 }
 
 impl Part2Block {
-    fn write_one(&self, location: usize, value: usize, memory: &mut HashMap<usize, usize>) {
-        let addresses = self.mask.apply(location);
-        for address in addresses {
-            dbg!(address, value);
-            memory.insert(address, value);
-        }
-    }
-
     /// Write all the memory changes we have
     pub fn write(&self, memory: &mut HashMap<usize, usize>) {
-        for instruction in &self.instructions {
-            dbg!(&instruction);
-            self.write_one(instruction.location, instruction.value, memory);
-        }
+        self.instructions
+            .iter()
+            .flat_map(|instruction| {
+                // For every possible real mask in our mask, apply it to the location fields
+                self.mask
+                    .iter()
+                    .map(move |mask| (mask.apply(instruction.location), instruction.value))
+            })
+            // Execute each instruction and write the masked values to memory
+            .for_each(|(location, value)| {
+                memory.insert(location, value);
+            });
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use pretty_assertions::assert_eq;
     use std::collections::HashMap;
 
     use super::Part2Block;
@@ -43,11 +44,35 @@ mod tests {
     #[test]
     fn test_write() -> anyhow::Result<()> {
         let input = "mask = 000000000000000000000000000000X1001X
-mem[42] = 100";
+mem[42] = 100
+mem[64] = 20
+";
+        // 42 in binary: 0101010
+        // 64 in binary: 1000000
+        // Base Mask: X1001X
+        // Masks generated (and their destination addresses)
+        // 010010 & 0101010 = 58
+        // 010011 & 0101010 = 59
+        // 110010 & 0101010 = 58
+        // 110011 & 0101010 = 59
+        // 010010 & 1000000 = 82
+        // 010011 & 1000000 = 83
+        // 110010 & 1000000 = 114
+        // 110011 & 1000000 = 115
         let block: Part2Block = input.parse()?;
         let mut memory = HashMap::new();
         block.write(&mut memory);
-        dbg!(&memory);
+        let expected: HashMap<usize, usize> = vec![
+            (58, 100),
+            (59, 100),
+            (82, 20),
+            (83, 20),
+            (114, 20),
+            (115, 20),
+        ]
+        .into_iter()
+        .collect();
+        assert_eq!(memory, expected);
         Ok(())
     }
 }

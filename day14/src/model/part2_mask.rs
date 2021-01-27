@@ -32,7 +32,7 @@ impl Part2Mask {
     /// `location` is the memory location we're applying the mask to
     /// `mask` is the mask we ineherit from our parent caller
     pub fn apply_recursive(mask: &HashMap<usize, BitValue>, location: usize) -> Vec<usize> {
-        if !mask.iter().any(|(_index, bit)| bit != &BitValue::Wild) {
+        if !mask.iter().any(|(_index, bit)| bit == &BitValue::Wild) {
             // If we have no more wild bits apply this mask to the value and return it
             let mut out = location;
             mask.iter().for_each(|(index, bit)| {

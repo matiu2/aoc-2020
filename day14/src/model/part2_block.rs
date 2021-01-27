@@ -18,7 +18,9 @@ pub struct Part2Block {
 
 impl Part2Block {
     fn write_one(&self, location: usize, value: usize, memory: &mut HashMap<usize, usize>) {
-        for address in self.mask.apply(location) {
+        let addresses = self.mask.apply(location);
+        for address in addresses {
+            dbg!(address, value);
             memory.insert(address, value);
         }
     }
@@ -26,7 +28,26 @@ impl Part2Block {
     /// Write all the memory changes we have
     pub fn write(&self, memory: &mut HashMap<usize, usize>) {
         for instruction in &self.instructions {
+            dbg!(&instruction);
             self.write_one(instruction.location, instruction.value, memory);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::collections::HashMap;
+
+    use super::Part2Block;
+
+    #[test]
+    fn test_write() -> anyhow::Result<()> {
+        let input = "mask = 000000000000000000000000000000X1001X
+mem[42] = 100";
+        let block: Part2Block = input.parse()?;
+        let mut memory = HashMap::new();
+        block.write(&mut memory);
+        dbg!(&memory);
+        Ok(())
     }
 }

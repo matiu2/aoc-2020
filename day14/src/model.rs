@@ -15,3 +15,6 @@ pub use part2_mask::{BitValue, Part2Mask};
 
 mod part2_block;
 pub use part2_block::Part2Block;
+
+mod part2_blocks;
+pub use part2_blocks::Part2Blocks;

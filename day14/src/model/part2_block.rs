@@ -17,6 +17,11 @@ pub struct Part2Block {
 }
 
 impl Part2Block {
+    /// Only used so we can build these in tests
+    #[cfg(test)]
+    pub fn new(mask: Part2Mask, instructions: Vec<Instruction>) -> Part2Block {
+        Part2Block { mask, instructions }
+    }
     /// Write all the memory changes we have
     pub fn write(&self, memory: &mut HashMap<usize, usize>) {
         self.instructions

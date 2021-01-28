@@ -1,6 +1,9 @@
 //! The bit mask for part 2 is different
 
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    fmt::{Debug, Write},
+};
 
 mod parse;
 
@@ -36,10 +39,23 @@ impl Part2Mask {
 
 /// This mask has only 0s and 1s in it
 /// It's what you get after you process Wild bit Part2Mask's
-#[derive(Debug, PartialEq, Eq)]
+#[derive(PartialEq, Eq)]
 pub struct Part2MaskProcessed {
     /// All the bits that are turned on
     bits: HashSet<usize>,
+}
+
+impl Debug for Part2MaskProcessed {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for i in 0..36 {
+            if self.bits.contains(&(35 - i)) {
+                f.write_char('1')?;
+            } else {
+                f.write_char('0')?;
+            }
+        }
+        Ok(())
+    }
 }
 
 impl Part2MaskProcessed {
@@ -48,6 +64,10 @@ impl Part2MaskProcessed {
         for bit_offset in &self.bits {
             out |= 1 << bit_offset;
         }
+        println!(
+            "Applying mask {:?} to address {} = {}",
+            self, memory_address, out
+        );
         out
     }
 }
@@ -112,7 +132,7 @@ impl Iterator for Part2MaskIterator {
         // Add our combination of wild bits
         if self.state > 0 {
             bits.extend(self.wild_bits.iter().enumerate().flat_map(|(idx, offset)| {
-                if idx + 1 & self.state > 0 {
+                if (idx + 1) & self.state > 0 {
                     Some(*offset)
                 } else {
                     None
@@ -153,6 +173,39 @@ mod tests {
                 // 101
                 bits: vec![2, 0, 1].into_iter().collect(),
             },
+        ]
+        .into_iter()
+        .collect();
+        assert_eq!(got, expected);
+    }
+
+    #[test]
+    fn test_mask_iterator2() {
+        let input = "mask = 000000000000000000000000000000X1001X";
+        let input: Part2Mask = input.parse().unwrap();
+        let got: Vec<String> = input.iter().map(|mask| format!("{:?}", mask)).collect();
+        let expected: Vec<String> = vec![
+            "000000000000000000000000000000010010",
+            "000000000000000000000000000000010011",
+            "000000000000000000000000000000110010",
+            "000000000000000000000000000000110011",
+        ]
+        .into_iter()
+        .map(|s| s.to_string())
+        .collect();
+        assert_eq!(got, expected);
+    }
+
+    #[test]
+    fn test_mask_apply() {
+        let input = "mask = 000000000000000000000000000000X1001X";
+        let input: Part2Mask = input.parse().unwrap();
+        let got: Vec<usize> = input.iter().map(|mask| mask.apply(42)).collect();
+        let expected: Vec<usize> = vec![
+            26, // 000000000000000000000000000000011010
+            27, // 000000000000000000000000000000011011
+            58, // 000000000000000000000000000000111010
+            59, // 000000000000000000000000000000111011
         ]
         .into_iter()
         .collect();

@@ -24,18 +24,15 @@ impl Part2Block {
     }
     /// Write all the memory changes we have
     pub fn write(&self, memory: &mut HashMap<usize, usize>) {
-        self.instructions
-            .iter()
-            .flat_map(|instruction| {
-                // For every possible real mask in our mask, apply it to the location fields
-                self.mask
-                    .iter()
-                    .map(move |mask| (mask.apply(instruction.location), instruction.value))
-            })
-            // Execute each instruction and write the masked values to memory
-            .for_each(|(location, value)| {
-                memory.insert(location, value);
-            });
+        self.instructions.iter().for_each(|instruction| {
+            // For every possible real mask in our mask, apply it to the location fields
+            self.mask
+                .apply(instruction.location)
+                // Execute each instruction and write the masked values to memory
+                .for_each(|new_location| {
+                    memory.insert(new_location, instruction.value);
+                });
+        });
     }
 }
 
@@ -49,31 +46,34 @@ mod tests {
     #[test]
     fn test_write() -> anyhow::Result<()> {
         let input = "mask = 000000000000000000000000000000X1001X
-mem[42] = 100
-mem[64] = 20
-";
+mem[42] = 100";
         // 42 in binary: 0101010
-        // 64 in binary: 1000000
-        // Base Mask: X1001X
-        // Masks generated (and their destination addresses)
-        // 010010 & 0101010 = 58
-        // 010011 & 0101010 = 59
-        // 110010 & 0101010 = 58
-        // 110011 & 0101010 = 59
-        // 010010 & 1000000 = 82
-        // 010011 & 1000000 = 83
-        // 110010 & 1000000 = 114
-        // 110011 & 1000000 = 115
+        let block: Part2Block = input.parse()?;
+        let mut memory = HashMap::new();
+        block.write(&mut memory);
+        let expected: HashMap<usize, usize> = vec![(26, 100), (27, 100), (58, 100), (59, 100)]
+            .into_iter()
+            .collect();
+        assert_eq!(memory, expected);
+        Ok(())
+    }
+
+    #[test]
+    fn test_write2() -> anyhow::Result<()> {
+        let input = "mask = 00000000000000000000000000000000X0XX
+mem[26] = 1";
         let block: Part2Block = input.parse()?;
         let mut memory = HashMap::new();
         block.write(&mut memory);
         let expected: HashMap<usize, usize> = vec![
-            (58, 100),
-            (59, 100),
-            (82, 20),
-            (83, 20),
-            (114, 20),
-            (115, 20),
+            (16, 1),
+            (17, 1),
+            (18, 1),
+            (19, 1),
+            (24, 1),
+            (25, 1),
+            (26, 1),
+            (27, 1),
         ]
         .into_iter()
         .collect();

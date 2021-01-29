@@ -11,9 +11,16 @@ fn main() -> anyhow::Result<()> {
     let input = input?;
     let generator = NumberGenerator::new(&input);
     let answer = generator
+        .clone()
         .skip(2019)
         .next()
         .ok_or_else(|| anyhow!("Unable to find number 2020"))?;
     println!("Day 15 - Part 1 = {}", answer);
+    // Part 2
+    let answer = generator
+        .skip(30000000 - 1)
+        .next()
+        .ok_or_else(|| anyhow!("Unable to find number 30000000"))?;
+    println!("Day 15 - Part 2 = {}", answer);
     Ok(())
 }

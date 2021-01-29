@@ -1,6 +1,5 @@
-use std::{ops::RangeInclusive, str::FromStr};
+use std::ops::RangeInclusive;
 
-use anyhow::anyhow;
 use nom::{
     bytes::complete::{is_not, tag},
     character::complete::digit1,
@@ -16,7 +15,7 @@ pub struct Field {
     pub range_2: RangeInclusive<usize>,
 }
 
-fn parse_field<'a>(input: &'a str) -> IResult<&'a str, Field> {
+pub fn parse_field<'a>(input: &'a str) -> IResult<&'a str, Field> {
     // Define how to read a range
     let number = |s: &'a str| map_res(digit1, |s: &'a str| s.parse::<usize>())(s);
     let range_raw = |s: &'a str| separated_pair(number, tag("-"), number)(s);
@@ -36,24 +35,13 @@ fn parse_field<'a>(input: &'a str) -> IResult<&'a str, Field> {
     ))
 }
 
-impl FromStr for Field {
-    type Err = anyhow::Error;
-
-    /// Parse a field declaration
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        parse_field(s)
-            .map(|(_remainder, field)| field)
-            .map_err(|e| anyhow!("Parsing a field: {:?}", e))
-    }
-}
-
 #[cfg(test)]
 mod tests {
-    use super::Field;
+    use super::{parse_field, Field};
 
     #[test]
     fn test_parse_field() -> anyhow::Result<()> {
-        let field: Field = "class: 1-3 or 5-7".parse()?;
+        let (_rest, field): (&str, Field) = parse_field("class: 1-3 or 5-7")?;
         assert_eq!(&field.name, "class");
         assert_eq!(field.range_1, 1..=3);
         assert_eq!(field.range_2, 5..=7);

@@ -6,8 +6,8 @@ use nom::{
 use super::ticket::Ticket;
 #[derive(Debug, PartialEq, Eq)]
 pub struct Tickets {
-    your_ticket: Ticket,
-    nearby_tickets: Vec<Ticket>,
+    pub your_ticket: Ticket,
+    pub nearby_tickets: Vec<Ticket>,
 }
 
 impl Tickets {
@@ -52,12 +52,22 @@ nearby tickets:
         let (input, tickets) = Tickets::parse(input)?;
         assert_eq!(input, "");
         let expected = Tickets {
-            your_ticket: Ticket::new(vec![7, 1, 14]),
+            your_ticket: Ticket {
+                values: vec![7, 1, 14],
+            },
             nearby_tickets: vec![
-                Ticket::new(vec![7, 3, 47]),
-                Ticket::new(vec![40, 4, 50]),
-                Ticket::new(vec![55, 2, 20]),
-                Ticket::new(vec![38, 6, 12]),
+                Ticket {
+                    values: vec![7, 3, 47],
+                },
+                Ticket {
+                    values: vec![40, 4, 50],
+                },
+                Ticket {
+                    values: vec![55, 2, 20],
+                },
+                Ticket {
+                    values: vec![38, 6, 12],
+                },
             ],
         };
         assert_eq!(tickets, expected);

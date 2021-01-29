@@ -5,8 +5,8 @@ use nom::{character::complete::newline, multi::separated_list1, sequence::tuple,
 use super::{field::Field, tickets::Tickets};
 
 pub struct Problem {
-    fields: Vec<Field>,
-    tickets: Tickets,
+    pub fields: Vec<Field>,
+    pub tickets: Tickets,
 }
 
 impl Problem {

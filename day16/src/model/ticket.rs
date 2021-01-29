@@ -8,15 +8,11 @@ use nom::{
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Ticket {
-    values: Vec<usize>,
+    pub values: Vec<usize>,
 }
 
 impl Ticket {
     /// Only used to mock up tickets for testing
-    #[cfg(test)]
-    pub fn new(values: Vec<usize>) -> Ticket {
-        Ticket { values }
-    }
     pub fn parse(input: &str) -> IResult<&str, Ticket> {
         let number = map_res(digit1, |num: &str| num.parse::<usize>());
         let values = separated_list1(tag(","), number);

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 #[derive(Clone)]
-struct NumberGenerator<'a> {
+pub struct NumberGenerator<'a> {
     input: &'a [usize],
     l2_cache: HashMap<usize, usize>,
     // The last number (from turn - 1)

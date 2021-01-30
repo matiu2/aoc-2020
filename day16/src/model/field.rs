@@ -9,6 +9,7 @@ use nom::{
 };
 
 /// Represents a field declaration of a ticket
+#[derive(Debug)]
 pub struct Field {
     pub name: String,
     pub range_1: RangeInclusive<usize>,

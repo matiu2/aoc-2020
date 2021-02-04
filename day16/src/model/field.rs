@@ -9,7 +9,7 @@ use nom::{
 };
 
 /// Represents a field declaration of a ticket
-#[derive(Debug)]
+#[derive(Debug, Hash, PartialEq, Eq)]
 pub struct Field {
     pub name: String,
     pub range_1: RangeInclusive<usize>,
@@ -36,6 +36,10 @@ impl Field {
                 range_2,
             },
         ))
+    }
+    /// Returns true if a value is valid according to this field
+    pub fn validate(&self, value: &usize) -> bool {
+        self.range_1.contains(value) || self.range_2.contains(value)
     }
 }
 

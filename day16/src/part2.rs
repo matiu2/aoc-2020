@@ -4,7 +4,7 @@ use std::collections::{HashMap, HashSet};
 
 use crate::model::{Field, Problem, Ticket};
 
-/// Takes in a problem and returns the list of indexes that the fields should be in
+/// Takes in a problem and returns a map of which field validates which column of ticket data
 pub fn order_fields(problem: &Problem) -> HashMap<&Field, usize> {
     // First remove tickets with any invalid fields
     let valid_tickets: Vec<&Ticket> = problem
@@ -63,6 +63,7 @@ pub fn order_fields(problem: &Problem) -> HashMap<&Field, usize> {
                 .collect();
             let new_possibilities: HashSet<usize> =
                 possibilities.difference(&to_remove).cloned().collect();
+            // If there's only one possible column for this field now, remember that
             if new_possibilities.len() == 1 {
                 let bad_column: usize = new_possibilities.iter().next().cloned().unwrap();
                 // Update the possible_columns - removing the assigned fields

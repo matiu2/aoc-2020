@@ -25,71 +25,63 @@ pub fn order_fields(problem: &Problem) -> HashMap<&Field, usize> {
             })
         })
         .collect();
-    // Store each field and how many tickets it validates per column
+    // Store each field and the columns it could possibly be part of
     let field_count = problem.fields.len();
     let mut possible_columns: HashMap<&Field, HashSet<usize>> = problem
         .fields
         .iter()
         .map(|field| (field, (0..field_count).collect()))
         .collect();
-    // Keeping track of the fields we have yet to assign a column to
-    let mut fields_to_check: HashSet<&Field> = problem.fields.iter().collect();
-    while !fields_to_check.is_empty() {
-        let mut fields_to_remove = HashSet::new();
-        for field in &fields_to_check {
-            let possibilities = possible_columns.get(field).unwrap();
-            // Remove any columns that don't validate
-            let to_remove: HashSet<usize> = valid_tickets
-                .iter()
-                // For every ticket, get every column value
-                .flat_map(|ticket| {
-                    ticket
-                        .values
-                        .iter()
-                        .enumerate()
-                        .map(move |(index, value)| (index, value))
-                })
-                // We only care about columns that have validated in the past
-                .filter(|(index, _value)| possibilities.contains(index))
-                // Now we have, (column index, value) - we want to remove values that are invalid
-                .flat_map(|(index, value)| {
-                    if field.validate(value) {
-                        None
-                    } else {
-                        // We need to remove this from the possible columns for this field
-                        Some(index)
-                    }
-                })
-                .collect();
-            let new_possibilities: HashSet<usize> =
-                possibilities.difference(&to_remove).cloned().collect();
-            // If there's only one possible column for this field now, remember that
-            if new_possibilities.len() == 1 {
-                let bad_column: usize = new_possibilities.iter().next().cloned().unwrap();
-                // Update the possible_columns - removing the assigned fields
-                possible_columns
-                    .iter_mut()
-                    .for_each(|(_field, possibilities)| {
-                        possibilities.remove(&bad_column);
-                    });
-                // Remember this field is assigned
-                fields_to_remove.insert(*field);
-            }
-            possible_columns.insert(field, new_possibilities);
-        }
-        // Update what fields are yet to check
-        fields_to_check = fields_to_check
-            .difference(&fields_to_remove)
-            .cloned()
+    for field in &problem.fields {
+        let possibilities = possible_columns.get(field).unwrap();
+        // Remove any columns that don't validate
+        let to_remove: HashSet<usize> = valid_tickets
+            .iter()
+            // For every ticket, get every column value, that could possibly match this field
+            .flat_map(|ticket| {
+                ticket
+                    .values
+                    .iter()
+                    .enumerate()
+                    // We only care about columns that could possibly match this field
+                    .filter(|(index, _value)| possibilities.contains(index))
+                    .map(move |(index, value)| (index, value))
+            })
+            // Now we have, (column index, value) - we want to remove values that are invalid
+            .flat_map(|(index, value)| {
+                if field.validate(value) {
+                    None
+                } else {
+                    // We need to remove this from the possible columns for this field
+                    Some(index)
+                }
+            })
             .collect();
+        let new_possibilities: HashSet<usize> =
+            possibilities.difference(&to_remove).cloned().collect();
+        possible_columns.insert(field, new_possibilities);
     }
-    // Create the map of field -> column
-    possible_columns
+    // A map of each field to its column
+    let mut out = HashMap::new();
+    // Now go throug the list of possible columns, matching any field that matches exactly one column, until all fields have been assigned a column
+    while let Some((&field, &column)) = possible_columns
         .iter()
-        .flat_map(|(&field, possibilites)| {
-            possibilites.iter().next().map(|column| (field, *column))
+        .find(|(_field, possibilities)| possibilities.len() == 1)
+        .and_then(|(field, possibilities)| {
+            possibilities.iter().next().map(|column| (field, column))
         })
-        .collect()
+    {
+        // Remember this combination
+        out.insert(field, column);
+        // Remove the field from possible_columns
+        possible_columns.remove(field);
+        // Remove the column from all other field's possibilites
+        for (_field, possibilites) in &mut possible_columns {
+            possibilites.remove(&column);
+        }
+    }
+    // Return the map of fields to columns
+    out
 }
 
 #[cfg(test)]

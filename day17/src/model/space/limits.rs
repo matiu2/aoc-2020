@@ -1,7 +1,8 @@
-//! Helps us find the limits of space
+//! Helps us find the li min_x: (), max_x: (), min_y: (), max_y: (), min_z: (), max_z: () min_x: (), max_x: (), min_y: (), max_y: (), min_z: (), max_z: () min_x: (), max_x: (), min_y: (), max_y: (), min_z: (), max_z: ()mits of space
 
 use super::Space;
 
+#[derive(Debug, PartialEq, Eq)]
 pub struct Limits {
     pub min_x: i64,
     pub max_x: i64,
@@ -12,6 +13,7 @@ pub struct Limits {
 }
 
 impl Limits {
+    /// Create a new set of limits
     pub fn new(space: &Space) -> Option<Limits> {
         let (x, y, z) = *space.active_blocks.iter().next()?;
         let min = [x, y, z];
@@ -41,5 +43,31 @@ impl Limits {
             min_z: min[2] - 1,
             max_z: max[2] + 1,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::model::Space;
+
+    use super::Limits;
+
+    #[test]
+    fn test_limits() {
+        let space = Space {
+            active_blocks: vec![(-1, -2, -3), (1, 2, 3)].into_iter().collect(),
+        };
+        let limits = Limits::new(&space).unwrap();
+        assert_eq!(
+            limits,
+            Limits {
+                min_x: -2,
+                max_x: 2,
+                min_y: -3,
+                max_y: 3,
+                min_z: -4,
+                max_z: 4,
+            }
+        );
     }
 }

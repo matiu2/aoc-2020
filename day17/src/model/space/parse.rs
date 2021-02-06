@@ -1,14 +1,9 @@
-use super::Space;
-/// A block of space for parsing
-#[derive(Debug, PartialEq, Eq)]
-struct Block {
-    z: i64,
-    x: Vec<i64>,
-    y: Vec<i64>,
-}
+use std::collections::HashSet;
 
-impl Block {
-    fn parse<'a>(lines: &mut impl Iterator<Item = &'a str>) -> Option<Block> {
+use super::Space;
+
+impl Space {
+    fn parse_block<'a>(lines: &mut impl Iterator<Item = &'a str>) -> Option<Space> {
         // Read `z=0`
         let z_line = lines.next()?;
         let parts: Vec<&str> = z_line.split('=').collect();
@@ -17,9 +12,8 @@ impl Block {
             _other => None,
         }?;
         // Read each line of the block
-        let mut x = Vec::new();
-        let mut y = Vec::new();
-        let mut current_y = 0;
+        let mut active_blocks = HashSet::new();
+        let mut y = 0;
         while let Some(row) = lines.next() {
             if row.is_empty() {
                 break;
@@ -27,35 +21,30 @@ impl Block {
             // Record the coords of the active cubes
             row.chars()
                 .enumerate()
-                .flat_map(|(x, c)| if c == '#' { Some(x) } else { None })
-                .for_each(|current_x| {
-                    x.push(current_x as i64);
-                    y.push(current_y);
+                .flat_map(|(x, c)| if c == '#' { Some(x as i64) } else { None })
+                .for_each(|x| {
+                    active_blocks.insert((x, y, z));
                 });
-            current_y += 1;
+            y += 1;
         }
-        Some(Block { z, x, y })
+        Some(Space { active_blocks })
     }
-}
 
-impl Space {
     pub fn parse(input: &str) -> Space {
         let mut lines = input.lines();
-        let mut x = Vec::new();
-        let mut y = Vec::new();
-        let mut z = Vec::new();
-        while let Some(block) = Block::parse(&mut lines) {
-            z.extend(vec![block.z; block.x.len()]);
-            x.extend(block.x);
-            y.extend(block.y);
+        let mut active_blocks = HashSet::new();
+        while let Some(block) = Space::parse_block(&mut lines) {
+            block.active_blocks.into_iter().for_each(|active_block| {
+                active_blocks.insert(active_block);
+            });
         }
-        Space { x, y, z }
+        Space { active_blocks }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{Block, Space};
+    use super::Space;
 
     #[test]
     fn test_parse_block() {
@@ -63,13 +52,13 @@ mod tests {
 .#.
 ..#
 ###";
-        let block = Block::parse(&mut input.lines());
+        let block = Space::parse_block(&mut input.lines());
         assert_eq!(
             block,
-            Some(Block {
-                z: 0,
-                x: vec![1, 2, 0, 1, 2],
-                y: vec![0, 1, 2, 2, 2],
+            Some(Space {
+                active_blocks: vec![(1, 0, 0), (2, 1, 0), (0, 2, 0), (1, 2, 0), (2, 2, 0)]
+                    .into_iter()
+                    .collect()
             })
         )
     }
@@ -89,9 +78,18 @@ z=1
         assert_eq!(
             space,
             Space {
-                x: vec![1, 2, 0, 1, 2, 0, 2, 1],
-                y: vec![0, 1, 2, 2, 2, 0, 1, 2],
-                z: vec![0, 0, 0, 0, 0, 1, 1, 1],
+                active_blocks: vec![
+                    (1, 0, 0),
+                    (2, 1, 0),
+                    (0, 2, 0),
+                    (1, 2, 0),
+                    (2, 2, 0),
+                    (0, 0, 1),
+                    (2, 1, 1),
+                    (1, 2, 1)
+                ]
+                .into_iter()
+                .collect()
             }
         );
     }

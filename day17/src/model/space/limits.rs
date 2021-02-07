@@ -50,6 +50,15 @@ impl Limits {
             .flat_map(move |z| (self.min_y..=self.max_y).map(move |y| (y, z)))
             .flat_map(move |(y, z)| (self.min_x..=self.max_x).map(move |x| (x, y, z)))
     }
+
+    pub fn into_iter(self) -> impl Iterator<Item = (i64, i64, i64)> {
+        let z_range = self.min_z..=self.max_z;
+        let y_range = self.min_y..=self.max_y;
+        let x_range = self.min_x..=self.max_x;
+        z_range
+            .flat_map(move |z| y_range.clone().map(move |y| (y, z)))
+            .flat_map(move |(y, z)| x_range.clone().map(move |x| (x, y, z)))
+    }
 }
 
 #[cfg(test)]

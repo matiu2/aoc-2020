@@ -115,4 +115,33 @@ mod tests {
             &expected_end
         );
     }
+
+    #[test]
+    fn test_into_iter() {
+        let space = Space {
+            active_blocks: vec![(-1, -2, -3), (1, 2, 3)].into_iter().collect(),
+        };
+        let limits = Limits::new(&space).unwrap();
+        let out: Vec<_> = limits.into_iter().collect();
+        let expected_start = vec![
+            (-2, -3, -4),
+            (-1, -3, -4),
+            (0, -3, -4),
+            (1, -3, -4),
+            (2, -3, -4),
+        ];
+        assert_eq!(&out[0..expected_start.len()], &expected_start);
+        let expected_end = vec![
+            (2, 2, 4),
+            (-2, 3, 4),
+            (-1, 3, 4),
+            (0, 3, 4),
+            (1, 3, 4),
+            (2, 3, 4),
+        ];
+        assert_eq!(
+            &out[out.len() - expected_end.len()..out.len()],
+            &expected_end
+        );
+    }
 }

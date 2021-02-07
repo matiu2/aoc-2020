@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 
-mod iterator;
+use limits::Limits;
+
 mod limits;
 mod parse;
 
@@ -17,5 +18,10 @@ impl Space {
         // Find our limits
         // For piece of space
         todo!()
+    }
+
+    /// Iterate over every part of possibly affected space
+    pub fn limits(&self) -> Limits {
+        Limits::new(self).unwrap_or_default()
     }
 }

@@ -2,7 +2,7 @@
 
 use super::Space;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Default)]
 pub struct Limits {
     pub min_x: i64,
     pub max_x: i64,
@@ -44,6 +44,12 @@ impl Limits {
             max_z: max[2] + 1,
         })
     }
+
+    pub fn iter(&self) -> impl Iterator<Item = (i64, i64, i64)> + '_ {
+        (self.min_z..=self.max_z)
+            .flat_map(move |z| (self.min_y..=self.max_y).map(move |y| (y, z)))
+            .flat_map(move |(y, z)| (self.min_x..=self.max_x).map(move |x| (x, y, z)))
+    }
 }
 
 #[cfg(test)]
@@ -51,6 +57,7 @@ mod tests {
     use crate::model::Space;
 
     use super::Limits;
+    use pretty_assertions::assert_eq;
 
     #[test]
     fn test_limits() {
@@ -68,6 +75,35 @@ mod tests {
                 min_z: -4,
                 max_z: 4,
             }
+        );
+    }
+
+    #[test]
+    fn test_iter() {
+        let space = Space {
+            active_blocks: vec![(-1, -2, -3), (1, 2, 3)].into_iter().collect(),
+        };
+        let limits = Limits::new(&space).unwrap();
+        let out: Vec<_> = limits.iter().collect();
+        let expected_start = vec![
+            (-2, -3, -4),
+            (-1, -3, -4),
+            (0, -3, -4),
+            (1, -3, -4),
+            (2, -3, -4),
+        ];
+        assert_eq!(&out[0..expected_start.len()], &expected_start);
+        let expected_end = vec![
+            (2, 2, 4),
+            (-2, 3, 4),
+            (-1, 3, 4),
+            (0, 3, 4),
+            (1, 3, 4),
+            (2, 3, 4),
+        ];
+        assert_eq!(
+            &out[out.len() - expected_end.len()..out.len()],
+            &expected_end
         );
     }
 }

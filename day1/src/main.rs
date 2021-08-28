@@ -7,6 +7,8 @@ fn main() -> Result<()> {
     let input: std::result::Result<Vec<usize>, _> =
         input.lines().map(|line| line.parse()).collect();
     let input = input?;
+
+    // Part 1 - Find 2 numbers that add up to 2020
     let entries = iproduct!(&input, &input).find(|(&a, &b)| a + b == 2020);
     if let Some((a, b)) = entries {
         println!("Part 1: The entries are {} and {}", a, b);

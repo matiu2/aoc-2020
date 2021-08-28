@@ -24,12 +24,15 @@ impl Password {
         let count = self.password.chars().filter(|&c| c == self.letter).count();
         count >= self.min && count <= self.max
     }
-    /// In part 2 min and max, actually become index (1 based index) a and b, and
+
+    /// In part 2 min and max, actually become indexes (1 based index) a and b, and
     /// *exactly one* of those must hold the letter
     fn valid_part2(&self) -> bool {
         let count = self
             .password
+            // Go through all the characters in the password
             .chars()
+            // Give each character an index
             .enumerate()
             // The input is 1 based, but enumerate is 0 based, so add 1 to make `i` match the input
             .map(|(i, c)| (i + 1, c))

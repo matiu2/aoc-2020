@@ -2,20 +2,28 @@
 use nom::{
     bytes::complete::tag,
     character::complete::{digit1, space0},
-    combinator::{eof, map, map_res},
+    combinator::{eof, map, map_res, opt, recognize},
     multi::many_till,
-    sequence::{pair, preceded, separated_pair},
+    sequence::{pair, preceded, separated_pair, tuple},
     IResult, Parser,
 };
 
+/// Reads a possibly signed integer
+fn number(input: &str) -> IResult<&str, i64> {
+    map_res(
+        recognize(pair(opt(tag("+").or(tag("-"))), digit1)),
+        |number: &str| number.parse::<i64>(),
+    )(input)
+}
+
 /// Gets '9' from z=9
 fn get_z(input: &str) -> IResult<&str, i64> {
-    preceded(tag("z="), map_res(digit1, |s: &str| s.parse::<i64>()))(input)
+    preceded(tag("z="), number)(input)
 }
 
 /// Gets '42' from w=42
 fn get_w(input: &str) -> IResult<&str, i64> {
-    preceded(tag("w="), map_res(digit1, |s: &str| s.parse::<i64>()))(input)
+    preceded(tag("w="), number)(input)
 }
 
 /// Gets the 'z' and 'w' values from: z=1, w=2
@@ -45,22 +53,42 @@ fn row(input: &str) -> IResult<&str, Vec<usize>> {
     )(input)
 }
 
+/// Parses a paragraph of rows, returns (x, y) coords
+fn block(input: &str) -> IResult<&str, Vec<(usize, usize)>> {
+    map(
+        many_till(row, tag("\n").or(eof)),
+        |(rows, _end)| -> Vec<(usize, usize)> {
+            rows.iter()
+                .enumerate()
+                .flat_map(|(y, row)| row.iter().map(move |x| (*x, y)))
+                .collect()
+        },
+    )(input)
+}
+
+/// Parses all the points in the input data
+//def cube(input: &str) -> Vec<super::Point> { }
 #[cfg(test)]
 mod tests {
 
     #[test]
     fn test_get_z() {
         assert_eq!(super::get_z("z=42"), Ok(("", 42)));
+        assert_eq!(super::get_z("z=-2"), Ok(("", -2)));
     }
 
     #[test]
     fn test_get_w() {
         assert_eq!(super::get_w("w=99"), Ok(("", 99)));
+        assert_eq!(super::get_w("w=-2"), Ok(("", -2)));
     }
 
     #[test]
     fn test_get_z_and_w() {
         assert_eq!(super::get_z_and_w("z=420, w=9"), Ok(("", (420, 9))));
+        assert_eq!(super::get_z_and_w("z=+1, w=-9"), Ok(("", (1, -9))));
+        assert_eq!(super::get_z_and_w("z=-1, w=+9"), Ok(("", (-1, 9))));
+        assert_eq!(super::get_z_and_w("z=-1, w=-4"), Ok(("", (-1, -4))));
     }
 
     #[test]
@@ -73,5 +101,17 @@ mod tests {
     fn test_row() {
         assert_eq!(super::row(".#.#..##.").unwrap(), ("", vec![1, 3, 6, 7]));
         assert_eq!(super::row("#.#..##.\n").unwrap(), ("", vec![0, 2, 5, 6]));
+    }
+
+    #[test]
+    fn test_block() {
+        assert_eq!(
+            super::block(".#.\n..#\n###").unwrap(),
+            ("", vec![(1, 0), (2, 1), (0, 2), (1, 2), (2, 2)])
+        );
+        assert_eq!(
+            super::block(".#.\n..#\n###\n\nremainder").unwrap(),
+            ("remainder", vec![(1, 0), (2, 1), (0, 2), (1, 2), (2, 2)])
+        );
     }
 }

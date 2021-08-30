@@ -1,3 +1,4 @@
+mod parse;
 /// A point in space
 #[derive(Debug)]
 pub struct Point<const N: usize> {

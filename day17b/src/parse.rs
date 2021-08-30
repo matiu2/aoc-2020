@@ -3,7 +3,7 @@ use nom::{
     bytes::complete::tag,
     character::complete::{digit1, space0},
     combinator::{eof, map, map_res, opt, recognize},
-    multi::many_till,
+    multi::{many0, many_till},
     sequence::{pair, preceded, separated_pair, terminated, tuple},
     IResult, Parser,
 };
@@ -88,8 +88,24 @@ fn space_block_4d(input: &str) -> IResult<&str, Vec<Point<4>>> {
         },
     )(input)
 }
+
+/// Parses a bunch of 3D space blocks and gives you all the points
+fn space_3d(input: &str) -> IResult<&str, Vec<Point<3>>> {
+    map(many0(space_block_3d), |xys| {
+        xys.into_iter().flatten().collect::<Vec<Point<3>>>()
+    })(input)
+}
+
+/// Parses a bunch of 4D space blocks and gives you all the points
+fn space_4d(input: &str) -> IResult<&str, Vec<Point<4>>> {
+    map(many0(space_block_4d), |xys| {
+        xys.into_iter().flatten().collect::<Vec<Point<4>>>()
+    })(input)
+}
+
 #[cfg(test)]
 mod tests {
+    use crate::Point;
 
     #[test]
     fn test_get_z() {
@@ -152,7 +168,6 @@ mod tests {
 
     #[test]
     fn test_space_block_4d() {
-        use crate::Point;
         let (remainder, space) =
             super::space_block_4d("z=4, w=-1\n.#.\n..#\n###\n\nremainder").unwrap();
         assert_eq!(remainder, "remainder");
@@ -164,5 +179,92 @@ mod tests {
             Point::new([2, 2, 4, -1]),
         ];
         assert_eq!(&space, &expected_space);
+    }
+
+    #[test]
+    fn test_space_3d() {
+        let input = r#"z=-2
+.....
+.....
+..#..
+.....
+.....
+
+z=-1
+..#..
+.#..#
+....#
+.#...
+.....
+
+z=0
+##...
+##...
+#....
+....#
+.###."#;
+        let (remainder, space) = super::space_3d(input).unwrap();
+        assert_eq!(remainder, "");
+        let expected_space = vec![
+            Point::new([2, 2, -2]),
+            Point::new([2, 0, -1]),
+            Point::new([1, 1, -1]),
+            Point::new([4, 1, -1]),
+            Point::new([4, 2, -1]),
+            Point::new([1, 3, -1]),
+            Point::new([0, 0, 0]),
+            Point::new([1, 0, 0]),
+            Point::new([0, 1, 0]),
+            Point::new([1, 1, 0]),
+            Point::new([0, 2, 0]),
+            Point::new([4, 3, 0]),
+            Point::new([1, 4, 0]),
+            Point::new([2, 4, 0]),
+            Point::new([3, 4, 0]),
+        ];
+        assert_eq!(space, expected_space);
+    }
+
+    fn test_space_4d() {
+        let input = r#"z=-2, w=10
+.....
+.....
+..#..
+.....
+.....
+
+z=-1, w=-4
+..#..
+.#..#
+....#
+.#...
+.....
+
+z=0, w=42
+##...
+##...
+#....
+....#
+.###."#;
+        let (remainder, space) = super::space_4d(input).unwrap();
+        assert_eq!(remainder, "");
+        let expected_space = vec![
+            Point::new([2, 2, -2, 10]),
+            Point::new([2, 0, -1, -4]),
+            Point::new([1, 1, -1, -4]),
+            Point::new([4, 1, -1, -4]),
+            Point::new([4, 2, -1, -4]),
+            Point::new([1, 3, -1, -4]),
+            Point::new([0, 0, 0, 42]),
+            Point::new([1, 0, 0, 42]),
+            Point::new([0, 1, 0, 42]),
+            Point::new([1, 1, 0, 42]),
+            Point::new([0, 2, 0, 42]),
+            Point::new([4, 3, 0, 42]),
+            Point::new([1, 4, 0, 42]),
+            Point::new([2, 4, 0, 42]),
+            Point::new([3, 4, 0, 42]),
+        ];
+        assert_eq!(space, expected_space);
     }
 }

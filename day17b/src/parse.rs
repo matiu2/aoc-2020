@@ -149,4 +149,20 @@ mod tests {
         ];
         assert_eq!(&space, &expected_space);
     }
+
+    #[test]
+    fn test_space_block_4d() {
+        use crate::Point;
+        let (remainder, space) =
+            super::space_block_4d("z=4, w=-1\n.#.\n..#\n###\n\nremainder").unwrap();
+        assert_eq!(remainder, "remainder");
+        let expected_space = vec![
+            Point::new([1, 0, 4, -1]),
+            Point::new([2, 1, 4, -1]),
+            Point::new([0, 2, 4, -1]),
+            Point::new([1, 2, 4, -1]),
+            Point::new([2, 2, 4, -1]),
+        ];
+        assert_eq!(&space, &expected_space);
+    }
 }

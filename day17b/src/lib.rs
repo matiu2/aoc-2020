@@ -1,6 +1,6 @@
 mod parse;
 /// A point in space
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Point<const N: usize> {
     /// In order, x,y,z,w, etc..
     coordinates: [i64; N],

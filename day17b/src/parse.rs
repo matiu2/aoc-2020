@@ -4,9 +4,11 @@ use nom::{
     character::complete::{digit1, space0},
     combinator::{eof, map, map_res, opt, recognize},
     multi::many_till,
-    sequence::{pair, preceded, separated_pair, tuple},
+    sequence::{pair, preceded, separated_pair, terminated, tuple},
     IResult, Parser,
 };
+
+use crate::Point;
 
 /// Reads a possibly signed integer
 fn number(input: &str) -> IResult<&str, i64> {
@@ -39,35 +41,53 @@ fn active(input: &str) -> IResult<&str, bool> {
 }
 
 /// Returns a vec of 'x' values of active cells from a row
-fn row(input: &str) -> IResult<&str, Vec<usize>> {
+fn row(input: &str) -> IResult<&str, Vec<i64>> {
     map(
         many_till(active, tag("\n").or(eof)),
-        |(bools, _new_line)| -> Vec<usize> {
+        |(bools, _new_line)| -> Vec<i64> {
             // Take a sequence of true/false, return the index of the 'true' values; these are the 'x' values
             bools
                 .iter()
                 .enumerate()
-                .flat_map(|(x, val)| val.then(|| x))
+                .flat_map(|(x, val)| val.then(|| x as i64))
                 .collect()
         },
     )(input)
 }
 
 /// Parses a paragraph of rows, returns (x, y) coords
-fn block(input: &str) -> IResult<&str, Vec<(usize, usize)>> {
+fn block(input: &str) -> IResult<&str, Vec<(i64, i64)>> {
     map(
         many_till(row, tag("\n").or(eof)),
-        |(rows, _end)| -> Vec<(usize, usize)> {
+        |(rows, _end)| -> Vec<(i64, i64)> {
             rows.iter()
                 .enumerate()
-                .flat_map(|(y, row)| row.iter().map(move |x| (*x, y)))
+                .flat_map(|(y, row)| row.iter().map(move |x| (*x, y as i64)))
                 .collect()
         },
     )(input)
 }
 
-/// Parses all the points in the input data
-//def cube(input: &str) -> Vec<super::Point> { }
+/// Parses 1 block of data into a 3 dimensional space
+fn space_block_3d(input: &str) -> IResult<&str, Vec<Point<3>>> {
+    map(separated_pair(get_z, tag("\n"), block), |(z, xys)| {
+        xys.into_iter()
+            .map(|(x, y)| Point::new([x, y, z]))
+            .collect::<Vec<Point<3>>>()
+    })(input)
+}
+
+/// Parses 1 block of data into a 4 dimensional space
+fn space_block_4d(input: &str) -> IResult<&str, Vec<Point<4>>> {
+    map(
+        separated_pair(get_z_and_w, tag("\n"), block),
+        |((z, w), xys)| {
+            xys.into_iter()
+                .map(|(x, y)| Point::new([x, y, z, w]))
+                .collect::<Vec<Point<4>>>()
+        },
+    )(input)
+}
 #[cfg(test)]
 mod tests {
 
@@ -113,5 +133,20 @@ mod tests {
             super::block(".#.\n..#\n###\n\nremainder").unwrap(),
             ("remainder", vec![(1, 0), (2, 1), (0, 2), (1, 2), (2, 2)])
         );
+    }
+
+    #[test]
+    fn test_space_block_3d() {
+        use crate::Point;
+        let (remainder, space) = super::space_block_3d("z=4\n.#.\n..#\n###\n\nremainder").unwrap();
+        assert_eq!(remainder, "remainder");
+        let expected_space = vec![
+            Point::new([1, 0, 4]),
+            Point::new([2, 1, 4]),
+            Point::new([0, 2, 4]),
+            Point::new([1, 2, 4]),
+            Point::new([2, 2, 4]),
+        ];
+        assert_eq!(&space, &expected_space);
     }
 }

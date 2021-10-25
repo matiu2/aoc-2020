@@ -4,7 +4,7 @@ use nom::{
     character::complete::{digit1, space0},
     combinator::{eof, map, map_res, opt, recognize},
     multi::{many0, many_till},
-    sequence::{pair, preceded, separated_pair, terminated, tuple},
+    sequence::{pair, preceded, separated_pair},
     IResult, Parser,
 };
 
@@ -90,14 +90,14 @@ fn space_block_4d(input: &str) -> IResult<&str, Vec<Point<4>>> {
 }
 
 /// Parses a bunch of 3D space blocks and gives you all the points
-fn space_3d(input: &str) -> IResult<&str, Vec<Point<3>>> {
+pub fn space_3d(input: &str) -> IResult<&str, Vec<Point<3>>> {
     map(many0(space_block_3d), |xys| {
         xys.into_iter().flatten().collect::<Vec<Point<3>>>()
     })(input)
 }
 
 /// Parses a bunch of 4D space blocks and gives you all the points
-fn space_4d(input: &str) -> IResult<&str, Vec<Point<4>>> {
+pub fn space_4d(input: &str) -> IResult<&str, Vec<Point<4>>> {
     map(many0(space_block_4d), |xys| {
         xys.into_iter().flatten().collect::<Vec<Point<4>>>()
     })(input)

@@ -32,8 +32,8 @@ fn chains(input: &str) -> IResult<&str, Vec<Vec<usize>>> {
 }
 
 pub fn rule(input: &str) -> IResult<&str, Rule> {
-    let char = simple_char.map(|c| Rule::Simple(c));
-    let chains = chains.map(|nums| Rule::Chain(nums));
+    let char = simple_char.map(Rule::Simple);
+    let chains = chains.map(Rule::Chain);
     let rule = alt((char, chains));
     preceded(rule_number, rule)(input)
 }
@@ -101,6 +101,31 @@ mod test {
                 Rule::Simple('a'),
                 Rule::Chain(vec![vec![1, 3], vec![3, 1]]),
                 Rule::Simple('b')
+            ]
+        );
+    }
+
+    #[test]
+    fn test_advanced() {
+        let rules = r#"0: 4 1 5
+1: 2 3 | 3 2
+2: 4 4 | 5 5
+3: 4 5 | 5 4
+4: "a"
+5: "b""#;
+        let rules: Vec<Rule> = rules
+            .lines()
+            .map(|line| super::rule(line).unwrap().1)
+            .collect();
+        assert_eq!(
+            rules,
+            vec![
+                Rule::Chain(vec![vec![4, 1, 5]]),
+                Rule::Chain(vec![vec![2, 3], vec![3, 2]]),
+                Rule::Chain(vec![vec![4, 4], vec![5, 5]]),
+                Rule::Chain(vec![vec![4, 5], vec![5, 4]]),
+                Rule::Simple('a'),
+                Rule::Simple('b'),
             ]
         );
     }

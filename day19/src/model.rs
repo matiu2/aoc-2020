@@ -3,7 +3,13 @@ use std::convert::TryFrom;
 use nom::{error::Error, Err};
 
 #[derive(Debug, PartialEq)]
-pub enum Rule {
+pub struct Rule {
+    pub number: usize,
+    pub logic: RuleLogic,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum RuleLogic {
     // Looks like: "a"
     // Input must be 'a' for this to pass
     Simple(char),

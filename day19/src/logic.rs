@@ -1,4 +1,4 @@
-use crate::model::Rule;
+use crate::model::RuleLogic;
 
 /// Handles a simple rule: does this character match with the next character
 /// Returns the rest of the input if successful, or nothing if it fails
@@ -11,7 +11,7 @@ fn simple_rule(rule_char: char, input: &str) -> Option<&str> {
 }
 
 // Takes a bunch of alternate rule index chains; if at least one matches, returns the rest of the input
-fn chains<'a>(chains: &[Vec<usize>], rules: &[Rule], input: &'a str) -> Option<&'a str> {
+fn chains<'a>(chains: &[Vec<usize>], rules: &[RuleLogic], input: &'a str) -> Option<&'a str> {
     chains
         .iter()
         .flat_map(|this_chain| chain(this_chain, rules, input))
@@ -20,7 +20,7 @@ fn chains<'a>(chains: &[Vec<usize>], rules: &[Rule], input: &'a str) -> Option<&
 
 /// Takes a chain of rule indexes, if they all match, it returns the rest of the string
 /// If any fail, it returns None
-fn chain<'a>(chain: &[usize], rules: &[Rule], input: &'a str) -> Option<&'a str> {
+fn chain<'a>(chain: &[usize], rules: &[RuleLogic], input: &'a str) -> Option<&'a str> {
     chain
         .iter()
         .try_fold(input, |input, index| process_rule(rules, *index, input))
@@ -28,7 +28,7 @@ fn chain<'a>(chain: &[usize], rules: &[Rule], input: &'a str) -> Option<&'a str>
 
 /// Processes a single rule recursively following chains and alternate chains
 /// Returns true all characters match the rule
-fn process_rule<'a>(rules: &[Rule], index: usize, input: &'a str) -> Option<&'a str> {
+fn process_rule<'a>(rules: &[RuleLogic], index: usize, input: &'a str) -> Option<&'a str> {
     let rule = &rules[index];
     log::debug!(
         "Checking Rule {}: {:?} against input: {}",
@@ -38,15 +38,15 @@ fn process_rule<'a>(rules: &[Rule], index: usize, input: &'a str) -> Option<&'a 
     );
     let result = match rule {
         // This char matches
-        Rule::Simple(c) => simple_rule(*c, input),
-        Rule::Chain(indexes) => chains(indexes, rules, input),
+        RuleLogic::Simple(c) => simple_rule(*c, input),
+        RuleLogic::Chain(indexes) => chains(indexes, rules, input),
     };
     log::debug!("Rule: {:?} Input: {} = {:?}", rule, input, result);
     result
 }
 
 /// Check an input line of text against the rule collection
-pub fn check_input(rules: &[Rule], input: &str) -> bool {
+pub fn check_input(rules: &[RuleLogic], input: &str) -> bool {
     process_rule(rules, 0, input)
         .map(|left_over| left_over.is_empty())
         .unwrap_or(false)
@@ -54,8 +54,6 @@ pub fn check_input(rules: &[Rule], input: &str) -> bool {
 
 #[cfg(test)]
 mod test {
-
-    use crate::{model::Rule, nom_parse::rule as parse};
 
     #[test]
     fn test_process_rule() {
@@ -71,7 +69,7 @@ bababa
 abbbab
 aaabbb
 aaaabbb"#;
-        let rules: Vec<Rule> = rules.lines().map(|rule| parse(rule).unwrap().1).collect();
+        let rules = crate::nom_parse::rules(rules).unwrap();
         let passes: Vec<bool> = input
             .lines()
             .map(|line| super::check_input(&rules, line))

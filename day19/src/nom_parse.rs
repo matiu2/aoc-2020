@@ -1,18 +1,17 @@
-use crate::model::Rule;
+use crate::model::{Rule, RuleLogic};
 use nom::{
     branch::alt,
     bytes::complete::tag,
     character::complete::{anychar, digit1},
-    combinator::{map_res, recognize},
+    combinator::map_res,
     multi::separated_list1,
-    sequence::{delimited, preceded},
+    sequence::{delimited, pair, terminated},
     IResult, Parser,
 };
 
-// Get the rule number at the start of a line (we later just throw it away anyway)
 // Input example: '10: '
-fn rule_number(input: &str) -> IResult<&str, &str> {
-    recognize(digit1.and(tag(": ")))(input)
+fn rule_number(input: &str) -> IResult<&str, usize> {
+    terminated(number, tag(": "))(input)
 }
 
 fn simple_char(input: &str) -> IResult<&str, char> {
@@ -31,23 +30,38 @@ fn chains(input: &str) -> IResult<&str, Vec<Vec<usize>>> {
     separated_list1(tag(" | "), simple_chain)(input)
 }
 
+/// Parses a whole rule:
+/// eg. 10: "a"
+/// eg. 1: 1 4 | 4 5
 pub fn rule(input: &str) -> IResult<&str, Rule> {
-    let char = simple_char.map(Rule::Simple);
-    let chains = chains.map(Rule::Chain);
-    let rule = alt((char, chains));
-    preceded(rule_number, rule)(input)
+    let char = simple_char.map(RuleLogic::Simple);
+    let chains = chains.map(RuleLogic::Chain);
+    let rule_logic = alt((char, chains));
+    let (rest, (number, logic)) = pair(rule_number, rule_logic)(input)?;
+    Ok((rest, Rule { number, logic }))
+}
+
+/// Parses a bunch of rules and returns their logic in order
+pub fn rules(input: &str) -> Result<Vec<RuleLogic>, nom::Err<nom::error::Error<&str>>> {
+    let out: Result<Vec<Rule>, nom::Err<nom::error::Error<&str>>> = input
+        .lines()
+        .map(|line| rule(line).map(|(_rest, rule)| rule))
+        .collect();
+    let mut rules = out?;
+    rules.sort_by_key(|rule| rule.number);
+    Ok(rules.into_iter().map(|rule| rule.logic).collect())
 }
 
 #[cfg(test)]
 mod test {
-    use crate::model::Rule;
+    use crate::model::{Rule, RuleLogic};
 
     #[test]
     fn test_parse_rule_number() -> anyhow::Result<()> {
         // Read a number
         let input = "12: ";
         let (rest, output) = super::rule_number(input)?;
-        assert_eq!(output, input);
+        assert_eq!(output, 12);
         assert_eq!(rest, "");
         Ok(())
     }
@@ -78,8 +92,8 @@ mod test {
     fn test_rule() {
         let input = r#"0: 1 2
 1: "a"
-2: 1 3 | 3 1
-3: "b""#;
+3: "b"
+2: 1 3 | 3 1"#;
         let out: Vec<Rule> = input
             .lines()
             .map(|line| {
@@ -97,10 +111,22 @@ mod test {
         assert_eq!(
             out,
             vec![
-                Rule::Chain(vec![vec![1, 2]]),
-                Rule::Simple('a'),
-                Rule::Chain(vec![vec![1, 3], vec![3, 1]]),
-                Rule::Simple('b')
+                Rule {
+                    number: 0,
+                    logic: RuleLogic::Chain(vec![vec![1, 2]])
+                },
+                Rule {
+                    number: 1,
+                    logic: RuleLogic::Simple('a')
+                },
+                Rule {
+                    number: 3,
+                    logic: RuleLogic::Simple('b')
+                },
+                Rule {
+                    number: 2,
+                    logic: RuleLogic::Chain(vec![vec![1, 3], vec![3, 1]])
+                },
             ]
         );
     }
@@ -109,8 +135,8 @@ mod test {
     fn test_advanced() {
         let rules = r#"0: 4 1 5
 1: 2 3 | 3 2
-2: 4 4 | 5 5
 3: 4 5 | 5 4
+2: 4 4 | 5 5
 4: "a"
 5: "b""#;
         let rules: Vec<Rule> = rules
@@ -120,12 +146,30 @@ mod test {
         assert_eq!(
             rules,
             vec![
-                Rule::Chain(vec![vec![4, 1, 5]]),
-                Rule::Chain(vec![vec![2, 3], vec![3, 2]]),
-                Rule::Chain(vec![vec![4, 4], vec![5, 5]]),
-                Rule::Chain(vec![vec![4, 5], vec![5, 4]]),
-                Rule::Simple('a'),
-                Rule::Simple('b'),
+                Rule {
+                    number: 0,
+                    logic: RuleLogic::Chain(vec![vec![4, 1, 5]])
+                },
+                Rule {
+                    number: 1,
+                    logic: RuleLogic::Chain(vec![vec![2, 3], vec![3, 2]])
+                },
+                Rule {
+                    number: 3,
+                    logic: RuleLogic::Chain(vec![vec![4, 5], vec![5, 4]])
+                },
+                Rule {
+                    number: 2,
+                    logic: RuleLogic::Chain(vec![vec![4, 4], vec![5, 5]])
+                },
+                Rule {
+                    number: 4,
+                    logic: RuleLogic::Simple('a')
+                },
+                Rule {
+                    number: 5,
+                    logic: RuleLogic::Simple('b')
+                },
             ]
         );
     }

@@ -33,7 +33,7 @@ fn chains<'a>(
 }
 
 /// Takes a chain of rule indexes, if they all match, it returns the rest of the string
-/// If any fail, it returns None
+/// If any fail, it returns an empty vec
 /// It expands each link, into all the possibilities that match the input
 fn chain<'a>(
     chain: &[usize],

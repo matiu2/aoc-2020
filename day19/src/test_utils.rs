@@ -34,6 +34,6 @@ pub fn part2_rules() -> HashMap<usize, RuleLogic> {
 18: 15 15
 7: 14 5 | 1 21
 24: 14 1"#;
-    let rules: Vec<&str> = rules.lines().collect();
-    crate::nom_parse::rules(&rules).unwrap()
+    let rules = rules.lines();
+    crate::nom_parse::rules(rules).unwrap()
 }

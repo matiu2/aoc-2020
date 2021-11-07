@@ -37,7 +37,7 @@ impl Display for RuleLogic {
                     }
                     write!(f, " | ")?;
                 }
-                writeln!(f, "")
+                writeln!(f)
             }
         }
     }
@@ -45,10 +45,6 @@ impl Display for RuleLogic {
 
 impl RuleLogic {
     pub fn is_simple(&self) -> bool {
-        if let RuleLogic::Simple(_) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, RuleLogic::Simple(_))
     }
 }

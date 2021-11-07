@@ -3,19 +3,19 @@ use std::collections::HashMap;
 use crate::logic_shared::simple_rule;
 use crate::model::RuleLogic;
 
-// Takes a bunch of alternate rule index chains, return the first one that matches
+/// Takes a bunch of alternate rule index chains, return the first one that matches
 fn chains<'a>(
     chains: &[Vec<usize>],
     rules: &HashMap<usize, RuleLogic>,
     input: &'a str,
     indent: usize,
 ) -> Option<&'a str> {
-    // Collect all the possibilites, and use the one that consumes the most
+    // Tries each alternate chain, until one passes
     chains
         // Look at every posssible chain
         .iter()
         // Only take chains that pass
-        .flat_map(|this_chain| chain(this_chain, rules, input, indent + 1))
+        .flat_map(|this_chain| chain(this_chain, rules, input, indent))
         // Take the first one that matches
         .next()
 }
@@ -33,13 +33,13 @@ fn chain<'a>(
         // Try to go through all the links in the chain
         // Fail if any links fail
         .try_fold(input, |input, index| {
-            // Pass the output from the last link as the output to the next
-            process_rule(rules, *index, input, indent)
+            // Pass the output from the last link as the input to the next
+            process_rule(rules, *index, input, indent + 1)
         })
 }
 
 /// Processes a single rule recursively following chains and alternate chains
-/// Returns the rest of the string to be processed
+/// Returns the rest of the input to be processed
 fn process_rule<'a>(
     rules: &HashMap<usize, RuleLogic>,
     index: usize,
@@ -58,7 +58,7 @@ fn process_rule<'a>(
     let result: Option<&str> = match rule {
         // Match a single char
         RuleLogic::Simple(c) => simple_rule(*c, input),
-        // Or match a chain
+        // Or match a chain of chains
         RuleLogic::Chain(indexes) => chains(indexes, rules, input, indent),
     };
     log::debug!(
@@ -74,10 +74,9 @@ fn process_rule<'a>(
 
 /// Check an input line of text against the rule collection
 pub fn check_input(rules: &HashMap<usize, RuleLogic>, input: &str) -> bool {
-    let solutions = process_rule(rules, 0, input, 0);
-    log::info!("Solutions: {:?}", solutions);
-    // input matches if there is a solution and it has zero remainders
-    solutions
+    let remainder = process_rule(rules, 0, input, 0);
+    // The rule matches if there is a solution, and the left-over text is empty
+    remainder
         .map(|remainder| remainder.is_empty())
         .unwrap_or(false)
 }
@@ -86,6 +85,8 @@ pub fn check_input(rules: &HashMap<usize, RuleLogic>, input: &str) -> bool {
 mod test {
 
     use pretty_assertions::assert_eq;
+
+    use crate::nom_parse;
 
     #[test]
     fn test_process_rules() {
@@ -98,13 +99,14 @@ mod test {
             r#"4: "a""#,
             r#"5: "b""#,
         ];
-        let rules = crate::nom_parse::rules(&rules).unwrap();
+        let rules = nom_parse::rules(rules.into_iter()).unwrap();
         let lines = [
             "ababbb",  // Matches
             "bababa",  // No match
             "abbbab",  // Match
             "aaabbb",  // No match
             "aaaabbb", // Too long
+            "abbba",   // Too short
         ];
         let passes: Vec<&str> = lines
             .into_iter()
@@ -116,7 +118,7 @@ mod test {
     #[test]
     fn test_process_rules_advanced() {
         pretty_env_logger::try_init().ok();
-        let rules: Vec<&str> = r#"42: 9 14 | 10 1
+        let rules = r#"42: 9 14 | 10 1
 9: 14 27 | 1 26
 10: 23 14 | 28 1
 1: "a"
@@ -147,9 +149,8 @@ mod test {
 18: 15 15
 7: 14 5 | 1 21
 24: 14 1"#
-            .lines()
-            .collect();
-        let rules = crate::nom_parse::rules(&rules).unwrap();
+            .lines();
+        let rules = nom_parse::rules(rules).unwrap();
         let lines: Vec<&str> = "abbbbbabbbaaaababbaabbbbabababbbabbbbbbabaaaa
 bbabbbbaabaabba
 babbbbaabbbbbabbbbbbaabaaabaaa

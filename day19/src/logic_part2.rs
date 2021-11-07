@@ -21,6 +21,7 @@ fn chains<'a>(
 
 /// Takes a chain of rule indexes, if they all match, it returns the rest of the string
 /// If any fail, it returns None
+/// It expands each link, into all the possibilities that match the input
 fn chain<'a>(
     chain: &[usize],
     rules: &HashMap<usize, RuleLogic>,
@@ -31,11 +32,14 @@ fn chain<'a>(
         .iter()
         // Try to go through all the links in the chain
         .try_fold(vec![input], |solutions, index| {
-            // For each previous output
+            // For each previous output, reuse it as an input to process this link in the chain
             let new_solutions: Vec<&str> = solutions
                 .iter()
-                // Use it as the input for the next link
-                // Flatten everything we find
+                // Find all the possibilites that match using each of the
+                // previous inputs, and the next rule index in the chain,
+                // then flatten them into the possible output solutions (which
+                // will be used for input to the next link in the chain, or for
+                // the last link, returned)
                 .flat_map(|input| process_rule(rules, *index, input, indent))
                 .collect();
             if new_solutions.is_empty() {
@@ -43,11 +47,11 @@ fn chain<'a>(
                 // The chain is broken
                 None
             } else {
-                // Now return all the solutions we found for this chain
+                // Continue to the next link, providing all the solutions/remainders we've found so far
                 Some(new_solutions)
             }
         })
-        .unwrap_or_else(|| vec![])
+        .unwrap_or_else(Vec::new)
 }
 
 /// Processes a single rule recursively following chains and alternate chains
@@ -58,9 +62,6 @@ fn process_rule<'a>(
     input: &'a str,
     indent: usize,
 ) -> Vec<&'a str> {
-    if input.is_empty() {
-        return vec![];
-    }
     let rule = &rules[&index];
     log::debug!(
         "{:-indent$}Checking: {:2}: {:?} Input: {}",
@@ -90,7 +91,7 @@ fn process_rule<'a>(
 /// Check an input line of text against the rule collection
 pub fn check_input(rules: &HashMap<usize, RuleLogic>, input: &str) -> bool {
     let solutions = process_rule(rules, 0, input, 0);
-    log::info!("Solutions: {:?}", solutions);
+    // If any solution exists that has consumed the whole input, this is a pass
     solutions.contains(&"")
 }
 
@@ -114,7 +115,7 @@ mod test {
             r#"4: "a""#,
             r#"5: "b""#,
         ];
-        let rules = crate::nom_parse::rules(&rules).unwrap();
+        let rules = crate::nom_parse::rules(rules.into_iter()).unwrap();
         let lines = [
             "ababbb",  // Matches
             "bababa",  // No match

@@ -45,10 +45,9 @@ pub fn rule(input: &str) -> IResult<&str, Rule> {
 
 /// Parses a bunch of rules and returns their logic in order
 pub fn rules<'a>(
-    lines: &'a [&'a str],
+    lines: impl Iterator<Item = &'a str>,
 ) -> Result<HashMap<usize, RuleLogic>, nom::Err<nom::error::Error<&'a str>>> {
     let rules: Result<Vec<Rule>, nom::Err<nom::error::Error<&str>>> = lines
-        .iter()
         .map(|line| rule(line).map(|(_rest, rule)| rule))
         .collect();
     Ok(rules?

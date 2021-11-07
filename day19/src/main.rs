@@ -12,10 +12,10 @@ pub mod test_utils;
 
 fn main() {
     pretty_env_logger::init();
-    let data = read_to_string("input2.txt").unwrap();
+    let data = read_to_string("input.txt").unwrap();
     // Read until the first empty line to get the rules
-    let rules: Vec<&str> = data.lines().take_while(|line| !line.is_empty()).collect();
-    let mut rules = nom_parse::rules(&rules).unwrap();
+    let rules = data.lines().take_while(|line| !line.is_empty());
+    let mut rules = nom_parse::rules(rules).unwrap();
     // Now count how many rules pass the test
     let input: Vec<&str> = data
         .lines()

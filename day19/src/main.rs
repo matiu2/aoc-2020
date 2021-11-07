@@ -24,6 +24,7 @@ fn main() {
         .iter()
         // See if each line passes
         .filter(|input| check_input(&rules, input))
+        // Count the passes
         .count();
     println!("Day 19 part 1: {}", count);
 
@@ -34,6 +35,7 @@ fn main() {
         .iter()
         // See if each line passes
         .filter(|input| check_input(&rules, input))
+        // Count the passes
         .count();
     println!("Day 19 part 2: {}", count);
 }

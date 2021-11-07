@@ -16,25 +16,32 @@ fn rule_number(input: &str) -> IResult<&str, usize> {
     terminated(number, tag(": "))(input)
 }
 
+/// Matches a character between two double quotes: eg. '"a"' -> 'a'
 fn simple_char(input: &str) -> IResult<&str, char> {
     delimited(tag("\""), anychar, tag("\""))(input)
 }
 
+/// Matches any group of digits and returns it as a usize
+/// eg. '1234' -> 1234
 fn number(input: &str) -> IResult<&str, usize> {
     map_res(digit1, |digits: &str| digits.parse::<usize>())(input)
 }
 
+/// Grabs a single chain of rules
+/// eg. '1 2 3' -> vec![1, 2, 3]
 fn simple_chain(input: &str) -> IResult<&str, Vec<usize>> {
     separated_list1(tag(" "), number)(input)
 }
 
+/// Grabs optional chains
+/// eg. '1 2 3 | 4 5 6' vec![vec![1, 2, 3], vec![4, 5, 6]]
 fn chains(input: &str) -> IResult<&str, Vec<Vec<usize>>> {
     separated_list1(tag(" | "), simple_chain)(input)
 }
 
-/// Parses a whole rule:
-/// eg. 10: "a"
-/// eg. 1: 1 4 | 4 5
+/// Parses a whole rule including its number
+/// eg. 10: "a" -> Rule{number: 10, RuleLogic::Simple('a')}
+/// eg. 1: 1 4 | 4 5 -> Rule{number: 1, RuleLogic::Chain(vec![vec![1, 4], vec![4, 5]]) }
 pub fn rule(input: &str) -> IResult<&str, Rule> {
     let char = simple_char.map(RuleLogic::Simple);
     let chains = chains.map(RuleLogic::Chain);

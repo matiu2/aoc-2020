@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::model::{Rule, RuleLogic};
 use nom::{
     branch::alt,
@@ -42,14 +44,17 @@ pub fn rule(input: &str) -> IResult<&str, Rule> {
 }
 
 /// Parses a bunch of rules and returns their logic in order
-pub fn rules(input: &str) -> Result<Vec<RuleLogic>, nom::Err<nom::error::Error<&str>>> {
-    let out: Result<Vec<Rule>, nom::Err<nom::error::Error<&str>>> = input
-        .lines()
+pub fn rules<'a>(
+    lines: &'a [&'a str],
+) -> Result<HashMap<usize, RuleLogic>, nom::Err<nom::error::Error<&'a str>>> {
+    let rules: Result<Vec<Rule>, nom::Err<nom::error::Error<&str>>> = lines
+        .iter()
         .map(|line| rule(line).map(|(_rest, rule)| rule))
         .collect();
-    let mut rules = out?;
-    rules.sort_by_key(|rule| rule.number);
-    Ok(rules.into_iter().map(|rule| rule.logic).collect())
+    Ok(rules?
+        .into_iter()
+        .map(|rule| (rule.number, rule.logic))
+        .collect())
 }
 
 #[cfg(test)]

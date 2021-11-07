@@ -1,4 +1,4 @@
-use std::convert::TryFrom;
+use std::{convert::TryFrom, fmt::Display};
 
 use nom::{error::Error, Err};
 
@@ -8,7 +8,7 @@ pub struct Rule {
     pub logic: RuleLogic,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum RuleLogic {
     // Looks like: "a"
     // Input must be 'a' for this to pass
@@ -23,5 +23,32 @@ impl<'a> TryFrom<&'a str> for Rule {
 
     fn try_from(value: &'a str) -> Result<Self, Self::Error> {
         crate::nom_parse::rule(value).map(|(_rest, output)| output)
+    }
+}
+
+impl Display for RuleLogic {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            RuleLogic::Simple(c) => write!(f, "\"{}\"", c),
+            RuleLogic::Chain(chains) => {
+                for chain in chains {
+                    for rule in chain {
+                        write!(f, "{} ", rule)?;
+                    }
+                    write!(f, " | ")?;
+                }
+                writeln!(f, "")
+            }
+        }
+    }
+}
+
+impl RuleLogic {
+    pub fn is_simple(&self) -> bool {
+        if let RuleLogic::Simple(_) = self {
+            true
+        } else {
+            false
+        }
     }
 }

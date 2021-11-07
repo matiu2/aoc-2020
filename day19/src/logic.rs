@@ -59,7 +59,8 @@ fn chain<'a>(
                 // The chain is broken
                 None
             } else {
-                // Continue to the next link, providing all the solutions/remainders we've found so far
+                // Continue to the next link, providing all the
+                // solutions/remainders we've found so far as its input
                 Some(new_solutions)
             }
         })

@@ -1,14 +1,10 @@
 use std::fs::read_to_string;
 
-use crate::model::RuleLogic;
+use crate::{logic::check_input, model::RuleLogic};
 
-mod logic_part1;
-mod logic_part2;
-pub mod logic_shared;
+mod logic;
 pub mod model;
 pub mod nom_parse;
-#[cfg(test)]
-pub mod test_utils;
 
 fn main() {
     pretty_env_logger::init();
@@ -27,7 +23,7 @@ fn main() {
     let count = input
         .iter()
         // See if each line passes
-        .filter(|input| logic_part1::check_input(&rules, input))
+        .filter(|input| check_input(&rules, input))
         .count();
     println!("Day 19 part 1: {}", count);
 
@@ -37,7 +33,7 @@ fn main() {
     let count = input
         .iter()
         // See if each line passes
-        .filter(|input| logic_part2::check_input(&rules, input))
+        .filter(|input| check_input(&rules, input))
         .count();
     println!("Day 19 part 2: {}", count);
 }

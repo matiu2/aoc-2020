@@ -1,7 +1,20 @@
 use std::collections::HashMap;
 
-use crate::logic_shared::simple_rule;
 use crate::model::RuleLogic;
+
+/// Handles a simple rule: does this character match with the next character
+/// Returns the rest of the input if successful, or nothing if it fails
+pub fn simple_rule(rule_char: char, input: &str) -> Option<&str> {
+    input
+        // For every unicode character (ie. decode utf-8)
+        .chars()
+        // Only take the first one
+        .next()
+        // Only take this first one if it matches the character in our rule
+        .filter(|c2| *c2 == rule_char)
+        // If it matches, return the rest of the input
+        .map(|_| &input[1..])
+}
 
 // Takes a bunch of alternate rule index chains, We must try each possibility
 fn chains<'a>(
@@ -98,11 +111,78 @@ pub fn check_input(rules: &HashMap<usize, RuleLogic>, input: &str) -> bool {
 #[cfg(test)]
 mod test {
 
+    use std::collections::HashMap;
+
     use pretty_assertions::assert_eq;
 
-    use crate::{model::RuleLogic, test_utils::part2_rules};
+    use crate::model::RuleLogic;
 
     use super::check_input;
+
+    /// The input for the advanced tests
+    fn advanced_input() -> Vec<&'static str> {
+        "abbbbbabbbaaaababbaabbbbabababbbabbbbbbabaaaa
+bbabbbbaabaabba
+babbbbaabbbbbabbbbbbaabaaabaaa
+aaabbbbbbaaaabaababaabababbabaaabbababababaaa
+bbbbbbbaaaabbbbaaabbabaaa
+bbbababbbbaaaaaaaabbababaaababaabab
+ababaaaaaabaaab
+ababaaaaabbbaba
+baabbaaaabbaaaababbaababb
+abbbbabbbbaaaababbbbbbaaaababb
+aaaaabbaabaaaaababaa
+aaaabbaaaabbaaa
+aaaabbaabbaaaaaaabbbabbbaaabbaabaaa
+babaaabbbaaabaababbaabababaaab
+aabbbbbaabbbaaaaaabbbbbababaaaaabbaaabba"
+            .lines()
+            .collect()
+    }
+
+    /// The rules for the avanced tests
+    fn advanced_rules() -> HashMap<usize, RuleLogic> {
+        let rules = r#"42: 9 14 | 10 1
+9: 14 27 | 1 26
+10: 23 14 | 28 1
+1: "a"
+11: 42 31
+5: 1 14 | 15 1
+19: 14 1 | 14 14
+12: 24 14 | 19 1
+16: 15 1 | 14 14
+31: 14 17 | 1 13
+6: 14 14 | 1 14
+2: 1 24 | 14 4
+0: 8 11
+13: 14 3 | 1 12
+15: 1 | 14
+17: 14 2 | 1 7
+23: 25 1 | 22 14
+28: 16 1
+4: 1 1
+20: 14 14 | 1 15
+3: 5 14 | 16 1
+27: 1 6 | 14 18
+14: "b"
+21: 14 1 | 1 14
+25: 1 1 | 1 14
+22: 14 14
+8: 42
+26: 14 22 | 1 20
+18: 15 15
+7: 14 5 | 1 21
+24: 14 1"#;
+        crate::nom_parse::rules(rules.lines()).unwrap()
+    }
+
+    /// Returns the rules for part2 of the puzzle
+    fn part2_rules() -> HashMap<usize, RuleLogic> {
+        let mut rules = advanced_rules();
+        rules.insert(8, RuleLogic::Chain(vec![vec![42], vec![42, 8]]));
+        rules.insert(11, RuleLogic::Chain(vec![vec![42, 31], vec![42, 11, 31]]));
+        rules
+    }
 
     #[test]
     fn test_process_rule() {
@@ -131,6 +211,22 @@ mod test {
     }
 
     #[test]
+    fn test_process_rules_advanced() {
+        // Part 1 test still
+        pretty_env_logger::try_init().ok();
+        let rules = advanced_rules();
+        let lines = advanced_input();
+        let passes: Vec<&str> = lines
+            .into_iter()
+            .filter(|line| super::check_input(&rules, line))
+            .collect();
+        assert_eq!(
+            passes,
+            vec!["bbabbbbaabaabba", "ababaaaaaabaaab", "ababaaaaabbbaba"]
+        );
+    }
+
+    #[test]
     fn part2_simple() {
         pretty_env_logger::try_init().ok();
         let rules = part2_rules();
@@ -141,23 +237,7 @@ mod test {
     #[test]
     fn test_part2() {
         pretty_env_logger::try_init().ok();
-        let input: Vec<&str> = "abbbbbabbbaaaababbaabbbbabababbbabbbbbbabaaaa
-bbabbbbaabaabba
-babbbbaabbbbbabbbbbbaabaaabaaa
-aaabbbbbbaaaabaababaabababbabaaabbababababaaa
-bbbbbbbaaaabbbbaaabbabaaa
-bbbababbbbaaaaaaaabbababaaababaabab
-ababaaaaaabaaab
-ababaaaaabbbaba
-baabbaaaabbaaaababbaababb
-abbbbabbbbaaaababbbbbbaaaababb
-aaaaabbaabaaaaababaa
-aaaabbaaaabbaaa
-aaaabbaabbaaaaaaabbbabbbaaabbaabaaa
-babaaabbbaaabaababbaabababaaab
-aabbbbbaabbbaaaaaabbbbbababaaaaabbaaabba"
-            .lines()
-            .collect();
+        let input = advanced_input();
         let expected: Vec<&str> = "bbabbbbaabaabba
 babbbbaabbbbbabbbbbbaabaaabaaa
 aaabbbbbbaaaabaababaabababbabaaabbababababaaa

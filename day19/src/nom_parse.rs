@@ -61,13 +61,12 @@ mod test {
     use crate::model::{Rule, RuleLogic};
 
     #[test]
-    fn test_parse_rule_number() -> anyhow::Result<()> {
+    fn test_parse_rule_number() {
         // Read a number
         let input = "12: ";
-        let (rest, output) = super::rule_number(input)?;
+        let (rest, output) = super::rule_number(input).unwrap();
         assert_eq!(output, 12);
         assert_eq!(rest, "");
-        Ok(())
     }
 
     #[test]
